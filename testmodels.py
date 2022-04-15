@@ -4,39 +4,35 @@ from vocab import Vocab
 
 from torch.utils.data import DataLoader
 import torch
-import spacy
 import numpy as np
-from tqdm import tqdm
 
-
-nlp = spacy.load(r'/Users/FrankVerhoef/opt/anaconda3/envs/pai_parlai/lib/python3.9/site-packages/en_core_web_sm/en_core_web_sm-3.2.0')
-
-B=3
-PAD_VALUE=0
 
 opt = {
-    "embedding_size": 30,
-    "hidden_size": 256,
-    "num_layers": 15,
+    "embedding_size": 4,
+    "hidden_size": 8,
+    "num_layers": 5,
     "aggregate_method": "max",
     "encoder_type": ENCODER_TYPES[0],
-    "batch_size": 64,
+    "batch_size": 3,
     "lr": 0.1,
     "lr_limit": 1E-5,
     "weight_decay": 0.99
 }
 
 def test_models():
-    t  = torch.randint(low=0, high=10, size=(B, opt["num_layers"], opt["embedding_size"]), dtype=torch.float)
-    lens = torch.ones((B), dtype=torch.int64) * opt["num_layers"]
-    print(t)
+    print("===== TEST MODELS =====")
+    t  = torch.randint(low=0, high=10, size=(opt["batch_size"], opt["num_layers"], opt["embedding_size"]), dtype=torch.float)
+    lens = np.random.randint(low=1, high=opt["num_layers"], size=(opt["batch_size"])).tolist()
+    print(t, lens)
 
     for enc_type in ENCODER_TYPES:
         m = ENCODERS[enc_type](opt)
-        print(enc_type, m(t, lens))
+        print(enc_type)
+        print(m(t, lens))
 
 
 def test_dataset():
+    print("===== TEST DATASET =====")
     dataset = SNLIdataset("data/snli_1_0/snli_small_train.json", tokenizer=None, encoder=None, max_seq_len=opt["num_layers"])
     for i in range(3):
         print(i,dataset[i])
@@ -50,6 +46,7 @@ def embedding(x):
 
 def test_vocab():
 
+    print("===== TEST VOCAB =====")
     vocab = Vocab()
     vocab.load("vocab_test.json")
     dataset = SNLIdataset(
@@ -70,6 +67,7 @@ def test_vocab():
 
 def test_encoder():
 
+    print("===== TEST ENCODER =====")
     num_samples = 3
     vocab = Vocab()
     vocab.load("vocab_test.json")
@@ -89,11 +87,13 @@ def test_encoder():
         enc = Encoder(embedding, opt)
         r = enc(p, h)
 
-        print(enc_type, r)
+        print(enc_type)
+        print(r)
 
 
 def test_dataloader():
 
+    print("===== TEST DATALOADER =====")
     vocab = Vocab()
     vocab.load("vocab_test.json")
     dataset = SNLIdataset(
@@ -105,7 +105,7 @@ def test_dataloader():
 
     l = DataLoader(
         dataset, 
-        batch_size=64, 
+        batch_size=opt["batch_size"], 
         collate_fn=dataset.batchify
     )
 
