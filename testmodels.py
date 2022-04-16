@@ -1,6 +1,6 @@
 from encoder import Encoder, ENCODER_TYPES, ENCODERS
 from data import SNLIdataset
-from vocab import Vocab
+from vocab import Vocab, read_embeddings
 
 from torch.utils.data import DataLoader
 import torch
@@ -8,7 +8,10 @@ import numpy as np
 
 
 opt = {
-    "embedding_size": 4,
+    "vocab_path": None,
+    "dataset_path": "data/snli_1_0/snli_small_train.json",
+    "dataset_dir": "data/snli_1_0/",
+    "embedding_size": 300,
     "hidden_size": 8,
     "num_layers": 5,
     "aggregate_method": "max",
@@ -48,31 +51,45 @@ def test_vocab():
 
     print("===== TEST VOCAB =====")
     vocab = Vocab()
-    vocab.load("vocab_test.json")
     dataset = SNLIdataset(
-        "data/snli_1_0/snli_small_train.json",
+        opt["dataset_path"],
         tokenizer=vocab.tokenize,
         encoder=vocab.encode,
         max_seq_len=opt["num_layers"]
     )
+    if opt["vocab_path"] == None:
+        try:
+            vocab.load(opt["dataset_dir"] + "vocab.json")
+        except:
+            corpus = [ex["premise"] for ex in dataset[:1000]]
+            corpus += [ex["hypothesis"] for ex in dataset[:1000]]        
+            vocab.add_to_vocab(corpus)
+            vocab.save(opt["dataset_dir"] + "vocab.json")
+    else:
+        vocab.load(opt["vocab_path"])
 
-    num_samples = 100
-    corpus = [ex["premise"] for ex in dataset[2000:2000+num_samples]]
-    corpus += [ex["hypothesis"] for ex in dataset[2000:2000+num_samples]]
+    embeddings = read_embeddings(path="data/glove.840B.300d.txt", embedding_size=opt["embedding_size"])
+    vocab.compare_vocab_and_embeddings(embeddings=embeddings)
 
-    #vocab.add_to_vocab(corpus)
-    #print(vocab.t2id.items())  
-    #vocab.save("vocab_test3.json")
+    embedding = vocab.match_with_embeddings(embeddings=embeddings)
 
+    test_sentence = "Frank is really an NLP hero!"
+    test_tokens = vocab.tokenize(test_sentence)
+    test_indices = vocab.encode(test_tokens)
+    test_embeddings = embedding(torch.tensor(test_indices).unsqueeze(dim=0))
+    print(test_sentence)
+    print(test_tokens)
+    print(test_indices)
+    print(test_embeddings)
 
 def test_encoder():
 
     print("===== TEST ENCODER =====")
     num_samples = 3
     vocab = Vocab()
-    vocab.load("vocab_test.json")
+    vocab.load(opt["vocab_path"])
     dataset = SNLIdataset(
-        "data/snli_1_0/snli_small_train.json",
+        opt["dataset_path"],
         tokenizer=vocab.tokenize,
         encoder=vocab.encode,
         max_seq_len=opt["num_layers"]
@@ -95,9 +112,9 @@ def test_dataloader():
 
     print("===== TEST DATALOADER =====")
     vocab = Vocab()
-    vocab.load("vocab_test.json")
+    vocab.load(opt["vocab_path"])
     dataset = SNLIdataset(
-        "data/snli_1_0/snli_small_train.json",
+        opt["dataset_path"],
         tokenizer=vocab.tokenize,
         encoder=vocab.encode,
         max_seq_len=opt["num_layers"]
@@ -115,8 +132,8 @@ def test_dataloader():
 
 
 
-test_models()
-test_dataset()
+#test_models()
+#test_dataset()
 test_vocab()
-test_encoder()
-test_dataloader()
+#test_encoder()
+#test_dataloader()
