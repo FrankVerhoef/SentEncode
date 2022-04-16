@@ -1,27 +1,25 @@
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+from pytorch_lightning.strategies.ddp import DDPStrategy
 
 from torch.utils.data import DataLoader
 from argparse import ArgumentParser
 
 from train import SNLIModule, LearningRateAdjustment
 from data import SNLIdataset
-from vocab import Vocab
-from encoder import ENCODER_TYPES
-
-import torch.nn as nn
-
+from vocab import Vocab, read_embeddings
 
 
 def main(opt):
 
     vocab = Vocab()
-    vocab.load("vocab_test.json")
-
-    embedding = nn.Embedding(len(vocab.id2t), embedding_dim=opt["embedding_size"], padding_idx=0)
+    vocab.load(opt["vocab_path"])
+    embeddings = read_embeddings(path=opt["embeddings_path"], embedding_size=opt["embedding_size"])
+    vocab.compare_vocab_and_embeddings(embeddings=embeddings)
+    embedding = vocab.match_with_embeddings(embeddings=embeddings)
 
     dataset = SNLIdataset(
-        "data/snli_1_0/snli_small_train.json",
+        opt["dataset_path"],
         tokenizer=vocab.tokenize,
         encoder=vocab.encode,
         max_seq_len=opt["num_layers"],
@@ -50,6 +48,7 @@ def main(opt):
     trainer = pl.Trainer(
         accelerator=opt["accelerator"],
         devices=opt["devices"],
+        strategy = DDPStrategy(find_unused_parameters=False),
         max_epochs=opt["max_epochs"],
         callbacks=[
             LearningRateAdjustment(patience=opt["patience"]),
@@ -62,6 +61,12 @@ def main(opt):
 
 if __name__ == "__main__":
     parser = ArgumentParser()
+
+    # files
+    parser.add_argument("--dataset_dir", default="data/snli_1_0/")
+    parser.add_argument("--dataset_path", default="data/snli_1_0/snli_small_train.json")
+    parser.add_argument("--vocab_path", default="data/snli_1_0/vocab.json")
+    parser.add_argument("--embeddings_path", default= "data/glove.840B.300d.txt")
 
     # device options
     parser.add_argument("--accelerator", default="gpu")
