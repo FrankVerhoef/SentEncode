@@ -13,13 +13,13 @@ from vocab import Vocab, read_embeddings
 def main(opt):
 
     vocab = Vocab()
-    vocab.load(opt["vocab_path"])
-    embeddings = read_embeddings(path=opt["embeddings_path"], embedding_size=opt["embedding_size"])
+    vocab.load(opt["datadir"] + opt["dataset_dir"] + opt["vocab_file"])
+    embeddings = read_embeddings(path=opt["data_dir"] + opt["embeddings_file"], embedding_size=opt["embedding_size"])
     vocab.compare_vocab_and_embeddings(embeddings=embeddings)
     embedding = vocab.match_with_embeddings(embeddings=embeddings)
 
     dataset = SNLIdataset(
-        opt["dataset_path"],
+        opt["data_dir"] + opt["dataset_dir"] + opt["dataset_file"],
         tokenizer=vocab.tokenize,
         encoder=vocab.encode,
         max_seq_len=opt["num_layers"],
@@ -63,10 +63,11 @@ if __name__ == "__main__":
     parser = ArgumentParser()
 
     # files
-    parser.add_argument("--dataset_dir", default="data/snli_1_0/")
-    parser.add_argument("--dataset_path", default="data/snli_1_0/snli_small_train.json")
-    parser.add_argument("--vocab_path", default="data/snli_1_0/vocab.json")
-    parser.add_argument("--embeddings_path", default= "data/glove.840B.300d.txt")
+    parser.add_argument("--data_dir", default="data/")
+    parser.add_argument("--dataset_dir", default="snli_1_0/")
+    parser.add_argument("--dataset_file", default="snli_small_train.json")
+    parser.add_argument("--vocab_file", default="vocab.json")
+    parser.add_argument("--embeddings_file", default= "glove.840B.300d.txt")
 
     # device options
     parser.add_argument("--accelerator", default="gpu")
