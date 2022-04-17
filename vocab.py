@@ -24,16 +24,19 @@ class Vocab:
     def add_to_vocab(self, sentences):
 
         # collect all tokens
-        tokens = [t for s in sentences for t in self.tokenize(s)]
+        # tokens = [t for s in sentences for t in self.tokenize(s)]
 
+        count_start = len(self.id2t)
         # add new tokens to the indices
-        for t in tokens:
-            if t not in self.t2id.keys():
-                self.t2id[t] = len(self.id2t)
-                self.id2t.append(t)
-                self.count[t] = 1
-            else:
-                self.count[t] += 1
+        for s in sentences:
+            for t in self.tokenize(s):
+                if t not in self.t2id.keys():
+                    self.t2id[t] = len(self.id2t)
+                    self.id2t.append(t)
+                    self.count[t] = 1
+                else:
+                    self.count[t] += 1
+        print("Added {} tokens to vocabulary".format(len(self.id2t) - count_start))
 
 
     def tokenize(self, sentence):

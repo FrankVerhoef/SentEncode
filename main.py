@@ -51,12 +51,12 @@ def main(opt):
         vocab.load(dataset_dir + opt["vocab_file"])
     else:
         try:
-            vocab.load(dataset_dir + "vocab.json")
+            vocab.load(dataset_dir + "vocab_lstm.json")
         except:
             corpus = [ex["premise"] for ex in dataset_train]
             corpus += [ex["hypothesis"] for ex in dataset_train]        
             vocab.add_to_vocab(corpus)
-            vocab.save(dataset_dir + "vocab.json")
+            vocab.save(dataset_dir + "vocab_lstm.json")
     
     # match dataset vocabulary with embeddings
     embeddings = read_embeddings(path=opt["data_dir"] + opt["embeddings_file"], embedding_size=opt["embedding_size"])
@@ -79,6 +79,7 @@ def main(opt):
     )
 
     # train the model
+    print("Start training")
     trainer.fit(model=snli_model, train_dataloaders=train_loader, val_dataloaders=valid_loader)
 
 

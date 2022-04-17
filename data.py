@@ -37,6 +37,7 @@ class SNLIdataset(Dataset):
                         "hypothesis": ex["sentence2"],
                         "label": ex["gold_label"]
                     })
+        print("Loaded dataset from {} with {} examples".format(path, len(dataset)))
         return dataset if max==None else dataset[:max]
         
 
