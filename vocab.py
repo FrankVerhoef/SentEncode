@@ -3,8 +3,8 @@ import json
 import torch
 import torch.nn as nn
 
-nlp = spacy.load(r'/Users/FrankVerhoef/opt/anaconda3/envs/pai_parlai/lib/python3.9/site-packages/en_core_web_sm/en_core_web_sm-3.2.0')
-#nlp = spacy.load("en_core_web_sm")
+#nlp = spacy.load(r'/Users/FrankVerhoef/opt/anaconda3/envs/pai_parlai/lib/python3.9/site-packages/en_core_web_sm/en_core_web_sm-3.2.0')
+nlp = spacy.load("en_core_web_sm")
 
 PAD_TOKEN = '<PAD>'
 UNK_TOKEN = '<UNK>'

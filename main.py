@@ -12,37 +12,58 @@ from vocab import Vocab, read_embeddings
 
 def main(opt):
 
+    dataset_dir = opt["data_dir"] + opt["dataset_dir"]
     vocab = Vocab()
-    vocab.load(opt["datadir"] + opt["dataset_dir"] + opt["vocab_file"])
-    embeddings = read_embeddings(path=opt["data_dir"] + opt["embeddings_file"], embedding_size=opt["embedding_size"])
-    vocab.compare_vocab_and_embeddings(embeddings=embeddings)
-    embedding = vocab.match_with_embeddings(embeddings=embeddings)
 
-    dataset = SNLIdataset(
-        opt["data_dir"] + opt["dataset_dir"] + opt["dataset_file"],
+    # dataset for training
+    dataset_train = SNLIdataset(
+        dataset_dir + opt["dataset_file"] + "_train.jsonl",
         tokenizer=vocab.tokenize,
         encoder=vocab.encode,
-        max_seq_len=opt["num_layers"],
-        max=320
+        max_seq_len=opt["num_layers"]
     )
-
     train_loader = DataLoader(
-        dataset[:256], 
+        dataset_train, 
         batch_size=opt["batch_size"], 
-        collate_fn=dataset.batchify,
-        num_workers=8,
-        drop_last=True
-    )
-
-    valid_loader = DataLoader(
-        dataset[256:320], 
-        batch_size=opt["batch_size"], 
-        collate_fn=dataset.batchify,
+        collate_fn=dataset_train.batchify,
         num_workers=1,
         drop_last=True
     )
 
-    # init model
+    # dataset for validation
+    dataset_valid = SNLIdataset(
+        dataset_dir + opt["dataset_file"] + "_dev.jsonl",
+        tokenizer=vocab.tokenize,
+        encoder=vocab.encode,
+        max_seq_len=opt["num_layers"]
+    )
+   
+    valid_loader = DataLoader(
+        dataset_valid, 
+        batch_size=opt["batch_size"], 
+        collate_fn=dataset_valid.batchify,
+        num_workers=1,
+        drop_last=True
+    )
+
+    # load or build vocabulary, based on train dataset
+    if opt["vocab_file"] != None:
+        vocab.load(dataset_dir + opt["vocab_file"])
+    else:
+        try:
+            vocab.load(dataset_dir + "vocab.json")
+        except:
+            corpus = [ex["premise"] for ex in dataset_train]
+            corpus += [ex["hypothesis"] for ex in dataset_train]        
+            vocab.add_to_vocab(corpus)
+            vocab.save(dataset_dir + "vocab.json")
+    
+    # match dataset vocabulary with embeddings
+    embeddings = read_embeddings(path=opt["data_dir"] + opt["embeddings_file"], embedding_size=opt["embedding_size"])
+    vocab.compare_vocab_and_embeddings(embeddings=embeddings)
+    embedding = vocab.match_with_embeddings(embeddings=embeddings)
+
+    # init model and trainer
     snli_model = SNLIModule(embedding=embedding, opt=opt)
 
     trainer = pl.Trainer(
@@ -56,6 +77,8 @@ def main(opt):
         ],
         log_every_n_steps=10,
     )
+
+    # train the model
     trainer.fit(model=snli_model, train_dataloaders=train_loader, val_dataloaders=valid_loader)
 
 
@@ -65,13 +88,13 @@ if __name__ == "__main__":
     # files
     parser.add_argument("--data_dir", default="data/")
     parser.add_argument("--dataset_dir", default="snli_1_0/")
-    parser.add_argument("--dataset_file", default="snli_small_train.json")
-    parser.add_argument("--vocab_file", default="vocab.json")
+    parser.add_argument("--dataset_file", default="snli_1.0")     # train, valid, test will be appended
+    parser.add_argument("--vocab_file", default=None)
     parser.add_argument("--embeddings_file", default= "glove.840B.300d.txt")
 
     # device options
     parser.add_argument("--accelerator", default="gpu")
-    parser.add_argument("--devices", default=8)
+    parser.add_argument("--devices", default=1)
 
     # train options
     parser.add_argument("--max_epochs", type=int, default=3)
@@ -90,6 +113,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     opt = vars(args)
-    print(opt)
+    print('Parameters')
+    print('\n'.join(["{:20}\t{}".format(k,v) for k,v in opt.items()]))
 
     main(opt)

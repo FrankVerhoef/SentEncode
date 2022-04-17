@@ -48,9 +48,11 @@ class UniLSTM(nn.Module):
         # shape of h_n is L, B, H, so reshape and then use last hidden state as representation
         H = h_n.shape[-1]
         h_n = h_n[:L, :, :].reshape(B, L, H)
-        index_last = torch.tensor(xs_len).unsqueeze(dim=1).unsqueeze(dim=1).expand(size=(B, 1, H)) - 1
-        repr = h_n.gather(dim=1, index=index_last).squeeze(dim=1)
-        # repr = torch.stack([h[h_len-1, :] for h, h_len in zip(h_n, xs_len)])
+        # index_last = torch.tensor(xs_len).unsqueeze(dim=1).unsqueeze(dim=1).expand(size=(B, 1, H)) - 1
+        # index_last.to(h_n.device)
+        # print("lstm forward devices: ", h_n.device, index_last.device)
+        # repr = h_n.gather(dim=1, index=index_last).squeeze(dim=1)
+        repr = torch.stack([h[h_len-1, :] for h, h_len in zip(h_n, xs_len)])
 
         return repr
 
@@ -79,9 +81,9 @@ class BiLSTM(nn.Module):
         h_n = h_n[:2*L, :, :].reshape(B, L, 2, -1)
 
         # use concat of last forward and first backward hidden state as representation
-        # last_forward = torch.stack([h[h_len-1, 0, :] for h, h_len in zip(h_n, xs_len)])
-        index_last = torch.tensor(xs_len).unsqueeze(dim=1).unsqueeze(dim=1).expand(size=(B, 1, H)) - 1
-        last_forward = h_n[:, :, 0, :].gather(dim=1, index=index_last).squeeze(dim=1)
+        last_forward = torch.stack([h[h_len-1, 0, :] for h, h_len in zip(h_n, xs_len)])
+        # index_last = torch.tensor(xs_len).unsqueeze(dim=1).unsqueeze(dim=1).expand(size=(B, 1, H)) - 1
+        # last_forward = h_n[:, :, 0, :].gather(dim=1, index=index_last).squeeze(dim=1)
         first_backward = h_n[:, 0, 1, :]
         repr = torch.concat([last_forward, first_backward], dim=-1)
 

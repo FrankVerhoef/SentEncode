@@ -23,7 +23,7 @@ class LearningRateAdjustment(Callback):
         self.log('lr', lr)
 
         # adjust learning rate if validation accuracy is lower than recent history
-        if len(self.recent_accuracy) > 1:
+        if len(self.recent_accuracy) >= self.patience:
             if val_acc < min(self.recent_accuracy):
                 trainer.optimizers[0].param_groups[0]['lr'] = lr / 5
         
@@ -54,7 +54,7 @@ class SNLIModule(pl.LightningModule):
 
         optimizer = torch.optim.SGD(self.parameters(), lr=self.opt['lr'], weight_decay=self.opt['weight_decay'])
         lr_scheduler = {
-            'scheduler': torch.optim.lr_scheduler.MultiplicativeLR(optimizer, lr_lambda=lambda x:0.99),
+            'scheduler': torch.optim.lr_scheduler.MultiplicativeLR(optimizer, lr_lambda=lambda x:1.0),
             'name': 'lr'
         }
         return [optimizer], [lr_scheduler]
