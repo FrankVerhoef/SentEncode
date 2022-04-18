@@ -5,7 +5,7 @@ from pytorch_lightning.strategies.ddp import DDPStrategy
 from torch.utils.data import DataLoader
 from argparse import ArgumentParser
 
-from train import SNLIModule, LearningRateAdjustment
+from train import SNLIModule
 from data import SNLIdataset
 from vocab import Vocab
 
@@ -80,10 +80,10 @@ def main(opt):
         strategy = DDPStrategy(find_unused_parameters=False),
         max_epochs=opt["max_epochs"],
         callbacks=[
-            LearningRateAdjustment(patience=opt["patience"]),
             EarlyStopping(monitor="lr", stopping_threshold=opt["lr_limit"])
         ],
-        log_every_n_steps=10,
+        log_every_n_steps=1,
+        progress_bar_refresh_rate=1, 
     )
 
     # train the model
