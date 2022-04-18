@@ -114,12 +114,12 @@ class PoolBiLSTM(nn.Module):
 
         # shape of h_n is 2 x L, B, H
         # reshape h_n to combine forward and backward hidden states and perform pooling over the layers
-        # TODO: check if pooling includes or excludes the padding
+        # make sure to only include values up to h_len
         h_n = h_n[:2*L, :, :].reshape(B, L, -1)
         if self.aggregate_method == "max":
-            repr, _ = h_n.max(dim=1)
+            repr = torch.stack([h[:h_len, :].max(dim=0)[0] for h, h_len in zip(h_n, xs_len)])
         elif self.aggregate_method == "avg":
-            repr = h_n.mean(dim=1)
+            repr = torch.stack([h[:h_len, :].mean(dim=0) for h, h_len in zip(h_n, xs_len)])
         else:
             repr = None # should never occur because of check at initialization
 
