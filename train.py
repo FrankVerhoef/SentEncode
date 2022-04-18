@@ -15,7 +15,7 @@ class LearningRateAdjustment(Callback):
         self.patience = patience
         self.recent_accuracy = []
 
-    def on_train_epoch_end(self, trainer, pl_module):
+    def on_train_batch_end(self, trainer, pl_module):
 
         # get current validation accurancy and learning rate
         val_acc = trainer.callback_metrics['val_acc']
@@ -69,8 +69,8 @@ class SNLIModule(pl.LightningModule):
         acc = (preds.argmax(dim=-1) == labels).float().mean()
 
         # Logs the accuracy per epoch to tensorboard (weighted average over batches)
-        self.log('train_acc', acc, on_step=False, on_epoch=True)
-        self.log('train_loss', loss)
+        self.log('train_acc', acc, on_step=True)
+        self.log('train_loss', loss, on_step=True)
         return loss
 
 
@@ -81,7 +81,7 @@ class SNLIModule(pl.LightningModule):
         acc = (labels == preds).float().mean()
 
         # By default logs it per epoch (weighted average over batches)
-        self.log('val_acc', acc)
+        self.log('val_acc', acc, on_step=True)
 
 
     def test_step(self, batch, batch_idx):
