@@ -59,9 +59,26 @@ def main(opt):
             vocab.save(dataset_dir + "vocab_lstm.json")
     
     # match dataset vocabulary with embeddings
-    embeddings = read_embeddings(path=opt["data_dir"] + opt["embeddings_file"], embedding_size=opt["embedding_size"])
-    vocab.compare_vocab_and_embeddings(embeddings=embeddings)
-    embedding = vocab.match_with_embeddings(embeddings=embeddings)
+    if opt["snli_embeddings"] == None:
+        try:
+            embedding = vocab.match_with_embeddings(
+                path=dataset_dir + "glove.snli.300d.txt", 
+                embedding_size=opt["embedding_size"], 
+                savepath=None
+            )
+        except:       
+            embedding = vocab.match_with_embeddings(
+                path=opt["data_dir"] + opt["embeddings_file"], 
+                embedding_size=opt["embedding_size"], 
+                savepath=dataset_dir + "glove.snli.300d.txt"
+            )
+    else:
+        embedding = vocab.match_with_embeddings(
+            path=dataset_dir + opt["snli_embeddings"],
+            embedding_size=opt["embedding_size"], 
+            savepath=None
+        )
+
 
     # init model and trainer
     snli_model = SNLIModule(embedding=embedding, opt=opt)

@@ -37,7 +37,7 @@ class Encoder(nn.Module):
             nn.ReLU(),
             nn.Linear(512, 3)
         )
-        self.act = nn.Softmax(dim=-1)
+
 
     def __call__(self, premises, hypotheses):
 
@@ -54,7 +54,6 @@ class Encoder(nn.Module):
 
         # calculate the score
         out = self.mlp(combined)
-        out = self.act(out)
 
         return out
 

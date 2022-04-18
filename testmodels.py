@@ -1,6 +1,6 @@
 from encoder import Encoder, ENCODER_TYPES, ENCODERS
 from data import SNLIdataset
-from vocab import Vocab, read_embeddings
+from vocab import Vocab
 
 from torch.utils.data import DataLoader
 import torch
@@ -9,8 +9,10 @@ import numpy as np
 
 opt = {
     "vocab_path": None,
-    "dataset_path": "data/snli_1_0/snli_small_train.json",
+    "dataset_path": "data/snli_1_0/snli_small_train.jsonl",
     "dataset_dir": "data/snli_1_0/",
+    "glove_path": "data/glove.840B.300d.txt",
+    "snli_embeddings": None,
     "embedding_size": 300,
     "hidden_size": 8,
     "num_layers": 5,
@@ -59,19 +61,37 @@ def test_vocab():
     )
     if opt["vocab_path"] == None:
         try:
-            vocab.load(opt["dataset_dir"] + "vocab.json")
+            vocab.load(opt["dataset_dir"] + "snli_vocab.json")
         except:
             corpus = [ex["premise"] for ex in dataset[:1000]]
             corpus += [ex["hypothesis"] for ex in dataset[:1000]]        
             vocab.add_to_vocab(corpus)
-            vocab.save(opt["dataset_dir"] + "vocab.json")
+            vocab.save(opt["dataset_dir"] + "snli_vocab.json")
     else:
         vocab.load(opt["vocab_path"])
 
-    embeddings = read_embeddings(path="data/glove.840B.300d.txt", embedding_size=opt["embedding_size"])
-    vocab.compare_vocab_and_embeddings(embeddings=embeddings)
+    # embeddings = read_embeddings(path="data/glove.840B.300d.txt", embedding_size=opt["embedding_size"])
+    # vocab.compare_vocab_and_embeddings(embeddings=embeddings)
 
-    embedding = vocab.match_with_embeddings(embeddings=embeddings)
+    if opt["snli_embeddings"] == None:
+        try:
+            embedding = vocab.match_with_embeddings(
+                path="data/glove.snli.300d.txt", 
+                embedding_size=opt["embedding_size"], 
+                savepath=None
+            )
+        except:       
+            embedding = vocab.match_with_embeddings(
+                path=opt["glove_path"], 
+                embedding_size=opt["embedding_size"], 
+                savepath="data/glove.snli.300d.txt"
+            )
+    else:
+        embedding = vocab.match_with_embeddings(
+            path=opt["snli_embeddings"],
+            embedding_size=opt["embedding_size"], 
+            savepath=None
+        )
 
     test_sentence = "Frank is really an NLP hero!"
     test_tokens = vocab.tokenize(test_sentence)
