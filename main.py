@@ -7,7 +7,7 @@ from argparse import ArgumentParser
 
 from train import SNLIModule, LearningRateAdjustment
 from data import SNLIdataset
-from vocab import Vocab, read_embeddings
+from vocab import Vocab
 
 
 def main(opt):
@@ -26,7 +26,7 @@ def main(opt):
         dataset_train, 
         batch_size=opt["batch_size"], 
         collate_fn=dataset_train.batchify,
-        num_workers=1,
+        num_workers=4,
         drop_last=True
     )
 
@@ -42,7 +42,7 @@ def main(opt):
         dataset_valid, 
         batch_size=opt["batch_size"], 
         collate_fn=dataset_valid.batchify,
-        num_workers=1,
+        num_workers=4,
         drop_last=True
     )
 
@@ -51,34 +51,25 @@ def main(opt):
         vocab.load(dataset_dir + opt["vocab_file"])
     else:
         try:
-            vocab.load(dataset_dir + "vocab_lstm.json")
+            vocab.load(dataset_dir + "snli_vocab.json")
         except:
             corpus = [ex["premise"] for ex in dataset_train]
             corpus += [ex["hypothesis"] for ex in dataset_train]        
             vocab.add_to_vocab(corpus)
-            vocab.save(dataset_dir + "vocab_lstm.json")
+            vocab.save(dataset_dir + "snli_vocab.json")
     
     # match dataset vocabulary with embeddings
-    if opt["snli_embeddings"] == None:
+    if opt["snli_embeddings"] != None:
+        embedding = vocab.match_with_embeddings(path=dataset_dir + opt["snli_embeddings"], embedding_size=opt["embedding_size"])
+    else:
         try:
-            embedding = vocab.match_with_embeddings(
-                path=dataset_dir + "glove.snli.300d.txt", 
-                embedding_size=opt["embedding_size"], 
-                savepath=None
-            )
+            embedding = vocab.match_with_embeddings(path=dataset_dir + "glove.snli.300d.txt", embedding_size=opt["embedding_size"])
         except:       
             embedding = vocab.match_with_embeddings(
                 path=opt["data_dir"] + opt["embeddings_file"], 
                 embedding_size=opt["embedding_size"], 
                 savepath=dataset_dir + "glove.snli.300d.txt"
             )
-    else:
-        embedding = vocab.match_with_embeddings(
-            path=dataset_dir + opt["snli_embeddings"],
-            embedding_size=opt["embedding_size"], 
-            savepath=None
-        )
-
 
     # init model and trainer
     snli_model = SNLIModule(embedding=embedding, opt=opt)
@@ -109,6 +100,7 @@ if __name__ == "__main__":
     parser.add_argument("--dataset_file", default="snli_1.0")     # train, valid, test will be appended
     parser.add_argument("--vocab_file", default=None)
     parser.add_argument("--embeddings_file", default= "glove.840B.300d.txt")
+    parser.add_argument("--snli_embeddings", default=None)
 
     # device options
     parser.add_argument("--accelerator", default="gpu")
