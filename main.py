@@ -83,7 +83,7 @@ def main(opt):
             EarlyStopping(monitor="lr", stopping_threshold=opt["lr_limit"])
         ],
         log_every_n_steps=1,
-        progress_bar_refresh_rate=1, 
+        progress_bar_refresh_rate=100, 
     )
 
     # train the model
