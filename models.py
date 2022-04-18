@@ -32,27 +32,20 @@ class UniLSTM(nn.Module):
         self.lstm = nn.LSTM(
             input_size = opt['embedding_size'],
             hidden_size = opt['hidden_size'],
-            num_layers = opt['num_layers'],
+            num_layers = 1,
             batch_first = True,
             bidirectional = False
         )
 
     def forward(self, xs, xs_len):
-        # input shape is B, L, E
-        B, L, E = xs.shape
 
-        # pack, run through LSTM
+        # pack, run through LSTM, then unpack
         packed_padded_x = torch.nn.utils.rnn.pack_padded_sequence(xs, xs_len, batch_first=True, enforce_sorted=False)
         output, (h_n, c_n) = self.lstm(packed_padded_x)
+        output, os_len = torch.nn.utils.rnn.pad_packed_sequence(output, batch_first=True)
 
-        # shape of h_n is L, B, H, so reshape and then use last hidden state as representation
-        H = h_n.shape[-1]
-        h_n = h_n[:L, :, :].reshape(B, L, H)
-        # index_last = torch.tensor(xs_len).unsqueeze(dim=1).unsqueeze(dim=1).expand(size=(B, 1, H)) - 1
-        # index_last.to(h_n.device)
-        # print("lstm forward devices: ", h_n.device, index_last.device)
-        # repr = h_n.gather(dim=1, index=index_last).squeeze(dim=1)
-        repr = torch.stack([h[h_len-1, :] for h, h_len in zip(h_n, xs_len)])
+        # shape of output is B, L, H; use last hidden state per sequence as representation
+        repr = torch.stack([o[o_len-1, :] for o, o_len in zip(output, os_len)])
 
         return repr
 
@@ -75,16 +68,14 @@ class BiLSTM(nn.Module):
         # pack, run through LSTM
         packed_padded_x = torch.nn.utils.rnn.pack_padded_sequence(xs, xs_len, batch_first=True, enforce_sorted=False)
         output, (h_n, c_n) = self.lstm(packed_padded_x)
+        output, os_len = torch.nn.utils.rnn.pad_packed_sequence(output, batch_first=True)
 
-        # shape of h_n is 2 x L, B, H, first reshape
-        H = h_n.shape[-1]
-        h_n = h_n[:2*L, :, :].reshape(B, L, 2, -1)
+        # shape of output is B, max-L, 2 x H
+        output = output.reshape(B, max(os_len), 2, -1)
 
         # use concat of last forward and first backward hidden state as representation
-        last_forward = torch.stack([h[h_len-1, 0, :] for h, h_len in zip(h_n, xs_len)])
-        # index_last = torch.tensor(xs_len).unsqueeze(dim=1).unsqueeze(dim=1).expand(size=(B, 1, H)) - 1
-        # last_forward = h_n[:, :, 0, :].gather(dim=1, index=index_last).squeeze(dim=1)
-        first_backward = h_n[:, 0, 1, :]
+        last_forward = torch.stack([o[o_len-1, 0, :] for o, o_len in zip(output, os_len)])
+        first_backward = output[:, 0, 1, :]
         repr = torch.concat([last_forward, first_backward], dim=-1)
 
         return repr
@@ -105,21 +96,18 @@ class PoolBiLSTM(nn.Module):
         self.aggregate_method = opt['aggregate_method']
 
     def forward(self, xs, xs_len):
-        # input shape is B, L, E
-        B, L, E = xs.shape
 
         # pack, run through LSTM
         packed_padded_x = torch.nn.utils.rnn.pack_padded_sequence(xs, xs_len, batch_first=True, enforce_sorted=False)
-        output, (h_n, c_n) = self.lstm(packed_padded_x)
+        output, _ = self.lstm(packed_padded_x)
+        output, os_len = torch.nn.utils.rnn.pad_packed_sequence(output, batch_first=True)
 
-        # shape of h_n is 2 x L, B, H
-        # reshape h_n to combine forward and backward hidden states and perform pooling over the layers
-        # make sure to only include values up to h_len
-        h_n = h_n[:2*L, :, :].reshape(B, L, -1)
+        # shape of output is B, max-L, 2 x H
+        # perform pooling over the layers, make sure to only include values up to xs_len
         if self.aggregate_method == "max":
-            repr = torch.stack([h[:h_len, :].max(dim=0)[0] for h, h_len in zip(h_n, xs_len)])
+            repr = torch.stack([o[:o_len, :].max(dim=0)[0] for o, o_len in zip(output, os_len)])
         elif self.aggregate_method == "avg":
-            repr = torch.stack([h[:h_len, :].mean(dim=0) for h, h_len in zip(h_n, xs_len)])
+            repr = torch.stack([o[:o_len, :].mean(dim=0) for o, o_len in zip(output, os_len)])
         else:
             repr = None # should never occur because of check at initialization
 
