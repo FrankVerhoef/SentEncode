@@ -23,10 +23,8 @@ class Vocab:
 
     def add_to_vocab(self, sentences):
 
-        # collect all tokens
-        # tokens = [t for s in sentences for t in self.tokenize(s)]
-
         count_start = len(self.id2t)
+
         # add new tokens to the indices
         for s in tqdm(sentences):
             for t in self.tokenize(s):
@@ -77,18 +75,14 @@ class Vocab:
     def match_with_embeddings(self, path, embedding_size, savepath=None):
 
         def get_token_and_vector(line, embedding_size):
-            fields = line.split(' ')
+            fields = line.split()
             token = fields[0]
             try:
                 vector = torch.tensor([float(value) for value in fields[1:]])
-                assert \
-                    len(vector) == embedding_size, \
-                    "Embedding size from file {} does not match required embedding size {}".format(
-                        len(vector), embedding_size
-                    )
+                assert len(vector) == embedding_size
                 return token, vector
             except:
-                print("Error converting embedding for <{}>\n{}".format(token, fields[1:]))
+                print("Error creating embedding of size {} for <{}>\n{}".format(embedding_size, token, fields[1:]))
                 return None, None
 
         def print_coverage_stats(oov):
