@@ -26,7 +26,7 @@ def main(opt):
         dataset_train, 
         batch_size=opt["batch_size"], 
         collate_fn=dataset_train.batchify,
-        num_workers=4,
+        num_workers=3,
         drop_last=True
     )
 
@@ -42,7 +42,7 @@ def main(opt):
         dataset_valid, 
         batch_size=opt["batch_size"], 
         collate_fn=dataset_valid.batchify,
-        num_workers=4,
+        num_workers=3,
         drop_last=True
     )
 
@@ -83,7 +83,6 @@ def main(opt):
             EarlyStopping(monitor="lr", stopping_threshold=opt["lr_limit"])
         ],
         log_every_n_steps=1,
-        progress_bar_refresh_rate=100, 
     )
 
     # train the model

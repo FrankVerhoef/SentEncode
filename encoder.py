@@ -39,7 +39,7 @@ class Encoder(nn.Module):
         )
 
 
-    def __call__(self, premises, hypotheses):
+    def forward(self, premises, hypotheses):
 
         # input premises and hypotheses are batches with various sentence lengths
         p, p_len = premises
