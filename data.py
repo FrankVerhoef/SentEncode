@@ -67,7 +67,8 @@ class SNLIdataset(Dataset):
         p_padded = pad_sequence(p_ids, batch_first=True, padding_value=self.encoder(PAD_TOKEN))
         h_padded = pad_sequence(h_ids, batch_first=True, padding_value=self.encoder(PAD_TOKEN))
 
-        # convert labels to label values  
-        ys = torch.tensor([LABEL_VALUE[ex["label"]] for ex in examples], dtype=torch.long)
+        # convert labels to label values and then to one-hot vectors
+        labels = torch.tensor([LABEL_VALUE[ex["label"]] for ex in examples])
+        ys = torch.eye(3).gather(dim=0, index=labels.unsqueeze(dim=1).expand(-1,3))
 
         return ((p_padded, p_lengths), (h_padded, h_lengths)), ys
