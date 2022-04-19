@@ -32,12 +32,12 @@ class Encoder(nn.Module):
             "poolbilstm": opt['hidden_size'] * 2            
         }[opt['encoder_type']]
 
-        self.mlp = nn.Sequential(
-            nn.Linear(self.repr_size * 4, 512),
-            nn.ReLU(),
-            nn.Linear(512, 3)
-        )
-
+        # self.mlp = nn.Sequential(
+        #     nn.Linear(self.repr_size * 4, 512),
+        #     nn.ReLU(),
+        #     nn.Linear(512, 3)
+        # )
+        self.mlp = nn.Linear(self.repr_size * 4, 3)
 
     def forward(self, premises, hypotheses):
 
