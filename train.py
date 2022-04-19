@@ -4,7 +4,7 @@ import pytorch_lightning as pl
 
 import torch
 import torch.nn as nn
-
+import torch.nn.functional as F
 
 class SNLIModule(pl.LightningModule):
 
@@ -13,8 +13,8 @@ class SNLIModule(pl.LightningModule):
         super().__init__()
         self.opt = opt
         self.enc = Encoder(embedding, opt)
-        self.loss_module = nn.CrossEntropyLoss()
-
+        # self.loss_module = nn.CrossEntropyLoss()
+        self.loss_module = F.cross_entropy()
 
     def forward(self, x):
 
