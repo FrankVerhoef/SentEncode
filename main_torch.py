@@ -45,7 +45,7 @@ def get_dataset(path, vocab, opt):
         path,
         tokenizer=vocab.tokenize,
         encoder=vocab.encode,
-        max_seq_len=opt["num_layers"], max=1024
+        max_seq_len=opt["num_layers"]
     )
     return dataset
 

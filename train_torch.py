@@ -97,7 +97,7 @@ def evaluate_model(model, data_loader, device):
         acc = (labels == predictions).float().mean()
 
         # Append the results
-        batch_accuracy.append(acc)
+        batch_accuracy.append(acc.cpu())
         batch_size.append(len(labels))
 
     avg_accuracy = np.inner(batch_accuracy, batch_size) / sum(batch_size)
