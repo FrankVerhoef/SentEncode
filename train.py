@@ -14,7 +14,7 @@ class SNLIModule(pl.LightningModule):
         self.opt = opt
         self.enc = Encoder(embedding, opt)
         # self.loss_module = nn.CrossEntropyLoss()
-        self.loss_module = F.cross_entropy()
+
 
     def forward(self, x):
 
@@ -38,7 +38,7 @@ class SNLIModule(pl.LightningModule):
         # "batch" is the output of the training data loader.
         (premises, hypotheses), labels = batch
         preds = self.enc(premises, hypotheses)
-        loss = self.loss_module(preds, labels)
+        loss = F.cross_entropy(preds, labels)
         acc = (preds.argmax(dim=-1) == labels).float().mean()
 
         # Logs the accuracy per epoch to tensorboard (weighted average over batches)
