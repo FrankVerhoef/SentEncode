@@ -4,7 +4,6 @@ import pytorch_lightning as pl
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 class SNLIModule(pl.LightningModule):
 
@@ -13,7 +12,7 @@ class SNLIModule(pl.LightningModule):
         super().__init__()
         self.opt = opt
         self.enc = Encoder(embedding, opt)
-        # self.loss_module = nn.CrossEntropyLoss()
+        self.loss_module = nn.CrossEntropyLoss()
 
 
     def forward(self, x):
@@ -26,7 +25,13 @@ class SNLIModule(pl.LightningModule):
 
         optimizer = torch.optim.SGD(self.parameters(), lr=self.opt['lr'], weight_decay=self.opt['weight_decay'])
         lr_scheduler = {
-            "scheduler": torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.2, verbose=True), 
+            "scheduler": torch.optim.lr_scheduler.ReduceLROnPlateau(
+                optimizer, 
+                mode="min", 
+                factor=0.2, 
+                patience=self.opt["patience"], 
+                verbose=True
+            ), 
             "monitor": "val_acc",
             "name": 'lr'
         }
@@ -38,7 +43,7 @@ class SNLIModule(pl.LightningModule):
         # "batch" is the output of the training data loader.
         (premises, hypotheses), labels = batch
         preds = self.enc(premises, hypotheses)
-        loss = F.cross_entropy(preds, labels)
+        loss = self.loss_module(preds, labels)
         acc = (preds.argmax(dim=-1) == labels).float().mean()
 
         # Logs the accuracy per epoch to tensorboard (weighted average over batches)
@@ -56,7 +61,7 @@ class SNLIModule(pl.LightningModule):
         self.lr_schedulers().step(acc)
 
         # By default logs it per epoch (weighted average over batches)
-        self.log('val_acc', acc, on_step=True)
+        self.log('val_acc', acc)
 
 
     def test_step(self, batch, batch_idx):

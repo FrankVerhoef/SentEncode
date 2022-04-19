@@ -2,7 +2,7 @@ from torch.utils.data import DataLoader
 from argparse import ArgumentParser
 
 from train_torch import train
-from encoder import Encoder
+from encoder import CLASSIFIER_TYPES, ENCODER_TYPES, Encoder
 from data import SNLIdataset
 from vocab import Vocab
 
@@ -109,7 +109,8 @@ if __name__ == "__main__":
     parser.add_argument("--patience", type=int, default=1)
 
     # model options
-    parser.add_argument("--encoder_type", default="mean", choices=["mean", "lstm", "bilstm", "poolbilstm"])
+    parser.add_argument("--encoder_type", default="mean", choices=ENCODER_TYPES)
+    parser.add_argument("--classifier", default="mlp", choices=CLASSIFIER_TYPES)
     parser.add_argument("--embedding_size", type=int, default=300)
     parser.add_argument("--hidden_size", type=int, default=2048)
     parser.add_argument("--num_layers", type=int, default=64)

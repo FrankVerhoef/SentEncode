@@ -15,12 +15,12 @@ opt = {
     "dataset_file": "snli_small",
     "embeddings_file": "glove.840B.300d.txt",
     "snli_embeddings": "glove.snli.300d.txt",
-    "embedding_size": 300,
-    "hidden_size": 8,
-    "num_layers": 5,
+    "embedding_size": 10,
+    "hidden_size": 16,
+    "num_layers": 32,
     "aggregate_method": "max",
     "encoder_type": ENCODER_TYPES[0],
-    "batch_size": 3,
+    "batch_size": 4,
     "lr": 0.1,
     "lr_limit": 1E-5,
     "weight_decay": 0.99
@@ -99,7 +99,7 @@ def test_encoder():
 
     print("===== TEST ENCODER =====")
     dataset_dir = opt["data_dir"] + opt["dataset_dir"]
-    num_samples = 3
+    num_samples = opt["batch_size"]
     vocab = Vocab()
     vocab.load(dataset_dir + opt["vocab_file"])
     dataset = SNLIdataset(
@@ -112,14 +112,18 @@ def test_encoder():
     b = dataset.batchify(dataset[:num_samples])
     (p, h), t = b
 
+    criterion = nn.CrossEntropyLoss()
+
     for enc_type in ENCODER_TYPES:
 
         opt["encoder_type"] = enc_type
         enc = Encoder(embedding, opt)
         r = enc(p, h)
+        loss = criterion(r, t)
 
         print(enc_type)
         print(r)
+        print("targets, loss: ", t, loss)
 
 
 def test_dataloader():
@@ -184,9 +188,9 @@ def test_inference():
 
 
 
-test_models()
-test_dataset()
-test_vocab()
+#test_models()
+#test_dataset()
+#test_vocab()
 test_encoder()
-test_dataloader()
-test_inference()
+#test_dataloader()
+#test_inference()

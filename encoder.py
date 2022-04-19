@@ -15,6 +15,7 @@ ENCODERS = {
     'poolbilstm': PoolBiLSTM
 }
 ENCODER_TYPES = list(ENCODERS.keys())
+CLASSIFIER_TYPES = ["mlp", "linear"]
 
 class Encoder(nn.Module):
 
@@ -22,6 +23,7 @@ class Encoder(nn.Module):
         super().__init__()
 
         assert opt["encoder_type"] in ENCODER_TYPES, "Invalid encoder type: {}".format(opt['encoder_type'])
+        assert opt["classifier"] in CLASSIFIER_TYPES, "Invalid classifier type: {}".format(opt['classifier'])
 
         self.embedding = embedding
         self.sentence_encoder = ENCODERS[opt['encoder_type']](opt)
@@ -32,12 +34,14 @@ class Encoder(nn.Module):
             "poolbilstm": opt['hidden_size'] * 2            
         }[opt['encoder_type']]
 
-        # self.mlp = nn.Sequential(
-        #     nn.Linear(self.repr_size * 4, 512),
-        #     nn.ReLU(),
-        #     nn.Linear(512, 3)
-        # )
-        self.mlp = nn.Linear(self.repr_size * 4, 3)
+        if opt["classifier"] == "mlp":
+            self.classifier = nn.Sequential(
+                nn.Linear(self.repr_size * 4, 512),
+                nn.ReLU(),
+                nn.Linear(512, 3)
+            )
+        else:
+            self.classifier = nn.Linear(self.repr_size * 4, 3)
 
     def forward(self, premises, hypotheses):
 
@@ -53,7 +57,7 @@ class Encoder(nn.Module):
         combined = torch.concat([u, v, abs(u - v), u * v], dim=1)
 
         # calculate the score
-        out = self.mlp(combined)
+        out = self.classifier(combined)
 
         return out
 
