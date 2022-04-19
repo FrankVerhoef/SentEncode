@@ -1,0 +1,31 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Huidige bestand",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": ["--max_epochs", "10", 
+                "--vocab_file", "snli_vocab.json",
+                "--data_dir", "data/",
+                "--dataset_dir", "snli_1_0/",
+                "--dataset_file", "snli_small",
+                "--embeddings_file", "glove.840B.300d.txt",
+                "--snli_embeddings", "glove.snli.300d.txt",
+                "--embedding_size", "300", 
+                "--hidden_size", "16", 
+                "--num_layers", "5", 
+                "--batch_size", "64", 
+                "--accelerator", "None", 
+                "--devices", "1",
+                "--dataset_file", "snli_small",
+                "--embeddings_file", "glove.snli.300d.txt"]
+        }
+    ]
+}
