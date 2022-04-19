@@ -71,4 +71,4 @@ class SNLIdataset(Dataset):
         labels = torch.tensor([LABEL_VALUE[ex["label"]] for ex in examples])
         ys = torch.eye(3).gather(dim=0, index=labels.unsqueeze(dim=1).expand(-1,3))
 
-        return ((p_padded, p_lengths), (h_padded, h_lengths)), ys
+        return ((p_padded, p_lengths), (h_padded, h_lengths)), labels
