@@ -56,7 +56,7 @@ class BiLSTM(nn.Module):
         self.lstm = nn.LSTM(
             input_size = opt['embedding_size'],
             hidden_size = opt['hidden_size'],
-            num_layers = opt['num_layers'],
+            num_layers = 1,
             batch_first = True,
             bidirectional = True
         )
@@ -89,7 +89,7 @@ class PoolBiLSTM(nn.Module):
         self.lstm = nn.LSTM(
             input_size = opt['embedding_size'],
             hidden_size = opt['hidden_size'],
-            num_layers = opt['num_layers'],
+            num_layers = 1,
             batch_first = True,
             bidirectional = True
         )
