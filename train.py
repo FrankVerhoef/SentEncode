@@ -23,19 +23,23 @@ class SNLIModule(pl.LightningModule):
 
     def configure_optimizers(self):
 
-        optimizer = torch.optim.SGD(self.parameters(), lr=self.opt['lr'], weight_decay=self.opt['weight_decay'])
-        lr_scheduler = {
+        optimizer = torch.optim.SGD(self.parameters(), lr=self.opt['lr'])
+        scheduler1 = {
+            "scheduler": torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=self.opt["weight_decay"]),
+            "interval": "epoch"
+        }
+        scheduler2 = {
             "scheduler": torch.optim.lr_scheduler.ReduceLROnPlateau(
                 optimizer, 
                 mode="min", 
                 factor=0.2, 
-                patience=self.opt["patience"], 
-                verbose=True
+                patience=self.opt["patience"]
             ), 
-            "monitor": "val_acc",
-            "name": 'lr'
+            "interval": "epoch", 
+            "monitor": "val_acc"
         }
-        return [optimizer], [lr_scheduler]
+
+        return [optimizer], [scheduler1, scheduler2]
 
             
     def training_step(self, batch, batch_idx):
@@ -46,7 +50,7 @@ class SNLIModule(pl.LightningModule):
         loss = self.loss_module(preds, labels)
         acc = (preds.argmax(dim=-1) == labels).float().mean()
 
-        # Logs the accuracy per epoch to tensorboard (weighted average over batches)
+        # Logs the accuracy to tensorboard
         self.log('train_acc', acc, on_step=True)
         self.log('train_loss', loss, on_step=True)
         self.log('lr', self.trainer.optimizers[0].param_groups[0]['lr'], on_step=True)
@@ -58,7 +62,6 @@ class SNLIModule(pl.LightningModule):
         (premises, hypotheses), labels = batch
         preds = self.enc(premises, hypotheses).argmax(dim=-1)
         acc = (labels == preds).float().mean()
-        self.lr_schedulers().step(acc)
 
         # By default logs it per epoch (weighted average over batches)
         self.log('val_acc', acc)
@@ -70,5 +73,5 @@ class SNLIModule(pl.LightningModule):
         preds = self.enc(premises, hypotheses).argmax(dim=-1)
         acc = (labels == preds).float().mean()
 
-        # By default logs it per epoch (weighted average over batches), and returns it afterwards
+        # By default logs it per epoch (weighted average over batches)
         self.log('test_acc', acc)

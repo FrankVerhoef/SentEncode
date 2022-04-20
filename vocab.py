@@ -100,7 +100,7 @@ class Vocab:
                 freq_total, freq_common, freq_oov, freq_oov/freq_total
             ))
             print("Most frequent out-of-vocabulary tokens:")
-            for t,c in sorted(oov.items(), key=lambda x: x[1], reverse=True)[:20]:
+            for t,c in sorted(oov.items(), key=lambda x: x[1], reverse=True)[:10]:
                 print("\t{:20} \t{}".format(t[:20], c))
 
         # Initialize new indices

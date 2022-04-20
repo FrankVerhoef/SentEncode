@@ -41,7 +41,7 @@ class UniLSTM(nn.Module):
 
         # pack, run through LSTM, then unpack
         packed_padded_x = torch.nn.utils.rnn.pack_padded_sequence(xs, xs_len, batch_first=True, enforce_sorted=False)
-        output, (h_n, c_n) = self.lstm(packed_padded_x)
+        output, _ = self.lstm(packed_padded_x)
         output, os_len = torch.nn.utils.rnn.pad_packed_sequence(output, batch_first=True)
 
         # shape of output is B, L, H; use last hidden state per sequence as representation
@@ -67,7 +67,7 @@ class BiLSTM(nn.Module):
 
         # pack, run through LSTM
         packed_padded_x = torch.nn.utils.rnn.pack_padded_sequence(xs, xs_len, batch_first=True, enforce_sorted=False)
-        output, (h_n, c_n) = self.lstm(packed_padded_x)
+        output, _ = self.lstm(packed_padded_x)
         output, os_len = torch.nn.utils.rnn.pad_packed_sequence(output, batch_first=True)
 
         # shape of output is B, max-L, 2 x H

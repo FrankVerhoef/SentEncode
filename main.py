@@ -11,51 +11,19 @@ from data import SNLIdataset
 from vocab import Vocab
 
 
-def main(opt):
+def get_vocab_and_embedding(dataset_dir, dataset):
 
-    dataset_dir = opt["data_dir"] + opt["dataset_dir"]
     vocab = Vocab()
 
-    # dataset for training
-    dataset_train = SNLIdataset(
-        dataset_dir + opt["dataset_file"] + "_train.jsonl",
-        tokenizer=vocab.tokenize,
-        encoder=vocab.encode,
-        max_seq_len=opt["num_layers"]
-    )
-    train_loader = DataLoader(
-        dataset_train, 
-        batch_size=opt["batch_size"], 
-        collate_fn=dataset_train.batchify,
-        num_workers=3,
-        drop_last=True
-    )
-
-    # dataset for validation
-    dataset_valid = SNLIdataset(
-        dataset_dir + opt["dataset_file"] + "_dev.jsonl",
-        tokenizer=vocab.tokenize,
-        encoder=vocab.encode,
-        max_seq_len=opt["num_layers"]
-    )
-   
-    valid_loader = DataLoader(
-        dataset_valid, 
-        batch_size=opt["batch_size"], 
-        collate_fn=dataset_valid.batchify,
-        num_workers=3,
-        drop_last=True
-    )
-
-    # load or build vocabulary, based on train dataset
+    # load or build vocabulary, based on dataset
     if opt["vocab_file"] != None:
         vocab.load(dataset_dir + opt["vocab_file"])
     else:
         try:
             vocab.load(dataset_dir + "snli_vocab.json")
         except:
-            corpus = [ex["premise"] for ex in dataset_train]
-            corpus += [ex["hypothesis"] for ex in dataset_train]        
+            corpus = [ex["premise"] for ex in dataset]
+            corpus += [ex["hypothesis"] for ex in dataset]        
             vocab.add_to_vocab(corpus)
             vocab.save(dataset_dir + "snli_vocab.json")
     
@@ -71,6 +39,47 @@ def main(opt):
                 embedding_size=opt["embedding_size"], 
                 savepath=dataset_dir + "glove.snli.300d.txt"
             )
+    
+    return vocab, embedding
+
+
+def get_dataset(path, vocab, opt):
+
+    dataset = SNLIdataset(
+        path,
+        tokenizer=vocab.tokenize,
+        encoder=vocab.encode,
+        max_seq_len=opt["num_layers"], max=1000
+    )
+    return dataset
+
+
+def get_dataloader(dataset, opt):
+    data_loader = DataLoader(
+        dataset, 
+        batch_size=opt["batch_size"], 
+        collate_fn=dataset.batchify,
+        num_workers=3,
+        drop_last=True
+    )
+    return data_loader
+
+
+def main(opt):
+
+    dataset_dir = opt["data_dir"] + opt["dataset_dir"]
+
+    # initialize vocab with tokenizer and encoder
+    vocab = Vocab()
+
+    # get datasets for training and validation
+    train_dataset = get_dataset(dataset_dir + opt["dataset_file"] + "_train.jsonl", vocab, opt)
+    valid_dataset = get_dataset(dataset_dir + opt["dataset_file"] + "_dev.jsonl", vocab, opt)
+    train_loader = get_dataloader(train_dataset, opt)
+    valid_loader = get_dataloader(valid_dataset, opt)
+
+    # get vocabulary based on dataset and matching embedding
+    vocab, embedding = get_vocab_and_embedding(dataset_dir, train_dataset)
 
     # init model and trainer
     snli_model = SNLIModule(embedding=embedding, opt=opt)
@@ -79,7 +88,6 @@ def main(opt):
         accelerator=opt["accelerator"],
         devices=opt["devices"],
         strategy = DDPStrategy(find_unused_parameters=False),
-        max_epochs=opt["max_epochs"],
         callbacks=[
             EarlyStopping(monitor="lr", stopping_threshold=opt["lr_limit"])
         ],
@@ -107,12 +115,11 @@ if __name__ == "__main__":
     parser.add_argument("--devices", default=1)
 
     # train options
-    parser.add_argument("--max_epochs", type=int, default=3)
     parser.add_argument("--lr", type=float, default=0.1)
     parser.add_argument("--lr_limit", type=float, default=1E-5)
     parser.add_argument("--weight_decay", type=float, default=0.99)
     parser.add_argument("--batch_size", type=int, default=64)
-    parser.add_argument("--patience", type=int, default=1)
+    parser.add_argument("--patience", type=int, default=0)
 
     # model options
     parser.add_argument("--encoder_type", default="mean", choices=ENCODER_TYPES)
