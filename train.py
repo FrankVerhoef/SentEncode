@@ -11,17 +11,6 @@ from data import SNLIdataset
 from vocab import Vocab
 
 
-def get_dataloader(dataset, opt):
-    data_loader = DataLoader(
-        dataset, 
-        batch_size=opt["batch_size"], 
-        collate_fn=dataset.batchify,
-        num_workers=3,
-        drop_last=True
-    )
-    return data_loader
-
-
 def main(opt):
 
     dataset_dir = opt["data_dir"] + opt["dataset_dir"]

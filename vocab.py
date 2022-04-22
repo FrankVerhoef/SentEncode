@@ -54,7 +54,6 @@ class Vocab:
         try:
             return self.t2id[token]
         except:
-            print("UNK: {}".format(token))
             return self.t2id[UNK_TOKEN]
 
 
