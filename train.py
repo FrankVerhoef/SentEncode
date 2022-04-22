@@ -1,77 +1,125 @@
-from encoder import Encoder
-
 import pytorch_lightning as pl
+from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 
 import torch
-import torch.nn as nn
+from torch.utils.data import DataLoader
+from argparse import ArgumentParser
 
-class SNLIModule(pl.LightningModule):
-
-    def __init__(self, embedding, opt):
-
-        super().__init__()
-        self.opt = opt
-        self.enc = Encoder(embedding, opt)
-        self.loss_module = nn.CrossEntropyLoss()
+from snli_lightning import SNLIModule
+from encoder import ENCODER_TYPES, CLASSIFIER_TYPES
+from data import SNLIdataset
+from vocab import Vocab
 
 
-    def forward(self, x):
-
-        premises, hypotheses = x
-        return self.enc(premises, hypotheses)
-
-
-    def configure_optimizers(self):
-
-        optimizer = torch.optim.SGD(self.parameters(), lr=self.opt['lr'])
-        scheduler1 = {
-            "scheduler": torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=self.opt["weight_decay"]),
-            "interval": "epoch"
-        }
-        scheduler2 = {
-            "scheduler": torch.optim.lr_scheduler.ReduceLROnPlateau(
-                optimizer, 
-                mode="min", 
-                factor=0.2, 
-                patience=self.opt["patience"]
-            ), 
-            "interval": "epoch", 
-            "monitor": "val_acc"
-        }
-
-        return [optimizer], [scheduler1, scheduler2]
-
-            
-    def training_step(self, batch, batch_idx):
-
-        # "batch" is the output of the training data loader.
-        (premises, hypotheses), labels = batch
-        preds = self.enc(premises, hypotheses)
-        loss = self.loss_module(preds, labels)
-        acc = (preds.argmax(dim=-1) == labels).float().mean()
-
-        # Logs the accuracy to tensorboard
-        self.log('train_acc', acc, on_step=True)
-        self.log('train_loss', loss, on_step=True)
-        self.log('lr', self.trainer.optimizers[0].param_groups[0]['lr'], on_step=True)
-        return loss
+def get_dataloader(dataset, opt):
+    data_loader = DataLoader(
+        dataset, 
+        batch_size=opt["batch_size"], 
+        collate_fn=dataset.batchify,
+        num_workers=3,
+        drop_last=True
+    )
+    return data_loader
 
 
-    def validation_step(self, batch, batch_idx):
+def main(opt):
 
-        (premises, hypotheses), labels = batch
-        preds = self.enc(premises, hypotheses).argmax(dim=-1)
-        acc = (labels == preds).float().mean()
+    dataset_dir = opt["data_dir"] + opt["dataset_dir"]
 
-        # By default logs it per epoch (weighted average over batches)
-        self.log('val_acc', acc)
+    # initialize vocab with tokenizer and encoder
+    vocab = Vocab()
+
+    # get datasets for training and validation
+    train_dataset = SNLIdataset(
+        path=dataset_dir + opt["dataset_file"] + "_train.jsonl",
+        tokenizer=vocab.tokenize,
+        encoder=vocab.encode,
+        max_seq_len=opt["num_layers"]
+    )
+    valid_dataset = SNLIdataset(
+        path=dataset_dir + opt["dataset_file"] + "_dev.jsonl",
+        tokenizer=vocab.tokenize,
+        encoder=vocab.encode,
+        max_seq_len=opt["num_layers"]
+    )
+    train_loader = DataLoader(
+        train_dataset, 
+        batch_size=opt["batch_size"], 
+        collate_fn=train_dataset.batchify
+    )
+    valid_loader = DataLoader(
+        valid_dataset, 
+        batch_size=opt["batch_size"], 
+        collate_fn=valid_dataset.batchify
+    )
+
+    # get vocabulary from vocabfile or dataset
+    vocab_path = dataset_dir + opt["vocab_file"] if opt["vocab_file"] != None else "snli_vocab.json"
+    if not vocab.load(vocab_path):
+        corpus = [ex["premise"] for ex in dataset]
+        corpus += [ex["hypothesis"] for ex in dataset]        
+        vocab.add_to_vocab(corpus)
+        vocab.save(dataset_dir + "snli_vocab.json")
+
+    # read matched embeddings from preprocessed file or else build from original embeddingsfile
+    embed_path = dataset_dir + opt["snli_embeddings"] if opt["snli_embeddings"] != None else "glove.snli.300d.txt"
+    try:
+        embedding = vocab.match_with_embeddings(path=embed_path, embedding_size=opt["embedding_size"])
+    except:       
+        embedding = vocab.match_with_embeddings(
+            path=opt["data_dir"] + opt["embeddings_file"], 
+            embedding_size=opt["embedding_size"], 
+            savepath=dataset_dir + "glove.snli.300d.txt"
+        )
+
+    # init model and trainer
+    snli_model = SNLIModule(embedding=embedding, opt=opt)
+
+    trainer = pl.Trainer(
+        gpus=1 if opt["device"]=="gpu" and torch.cuda.is_available() else 0,
+        callbacks=[
+            EarlyStopping(monitor="lr", stopping_threshold=opt["lr_limit"])
+        ],
+        log_every_n_steps=1,
+    )
+
+    # train the model
+    print("Start training")
+    trainer.fit(model=snli_model, train_dataloaders=train_loader, val_dataloaders=valid_loader)
 
 
-    def test_step(self, batch, batch_idx):
+if __name__ == "__main__":
+    parser = ArgumentParser()
 
-        (premises, hypotheses), labels = batch
-        preds = self.enc(premises, hypotheses).argmax(dim=-1)
-        acc = (labels == preds).float().mean()
+    # files
+    parser.add_argument("--data_dir", default="data/")
+    parser.add_argument("--dataset_dir", default="snli_1_0/")
+    parser.add_argument("--dataset_file", default="snli_1.0")     # train, valid, test will be appended
+    parser.add_argument("--vocab_file", default=None)
+    parser.add_argument("--embeddings_file", default= "glove.840B.300d.txt")
+    parser.add_argument("--snli_embeddings", default=None)
 
-        # By default logs it per epoch (weighted average over batches)
-        self.log('test_acc', acc)
+    # device options
+    parser.add_argument("--device", default="gpu")
+
+    # train options
+    parser.add_argument("--lr", type=float, default=0.1)
+    parser.add_argument("--lr_limit", type=float, default=1E-5)
+    parser.add_argument("--weight_decay", type=float, default=0.99)
+    parser.add_argument("--batch_size", type=int, default=64)
+    parser.add_argument("--patience", type=int, default=0)
+
+    # model options
+    parser.add_argument("--encoder_type", default="mean", choices=ENCODER_TYPES)
+    parser.add_argument("--classifier", default="mlp", choices=CLASSIFIER_TYPES)
+    parser.add_argument("--embedding_size", type=int, default=300)
+    parser.add_argument("--hidden_size", type=int, default=2048)
+    parser.add_argument("--num_layers", type=int, default=64)
+    parser.add_argument("--aggregate_method", default="max", choices=["max", "avg"])
+
+    args = parser.parse_args()
+    opt = vars(args)
+    print('Parameters')
+    print('\n'.join(["{:20}\t{}".format(k,v) for k,v in opt.items()]))
+
+    main(opt)

@@ -54,6 +54,7 @@ class Vocab:
         try:
             return self.t2id[token]
         except:
+            print("UNK: {}".format(token))
             return self.t2id[UNK_TOKEN]
 
 
@@ -65,11 +66,15 @@ class Vocab:
     
 
     def load(self, path):
-        with open(path, "r") as f:
-            self.count = json.loads(f.readline())
-            self.id2t = list(self.count.keys())
-            self.t2id = {self.id2t[id]: id for id in range(len(self.id2t))}
-        print("Loaded vocabulary with {} tokens".format(len(self.id2t)))
+        try:
+            with open(path, "r") as f:
+                self.count = json.loads(f.readline())
+                self.id2t = list(self.count.keys())
+                self.t2id = {self.id2t[id]: id for id in range(len(self.id2t))}
+            print("Loaded vocabulary with {} tokens".format(len(self.id2t)))
+            return True
+        except:
+            return False
 
 
     def match_with_embeddings(self, path, embedding_size, savepath=None):
