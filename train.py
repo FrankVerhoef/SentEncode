@@ -1,5 +1,6 @@
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+from pytorch_lightning.callbacks import ModelCheckpoint
 
 import torch
 from torch.utils.data import DataLoader
@@ -69,7 +70,8 @@ def main(opt):
     trainer = pl.Trainer(
         gpus=1 if opt["device"]=="gpu" and torch.cuda.is_available() else 0,
         callbacks=[
-            EarlyStopping(monitor="lr", stopping_threshold=opt["lr_limit"])
+            EarlyStopping(monitor="lr", stopping_threshold=opt["lr_limit"]),
+            ModelCheckpoint(save_weights_only=True, monitor="val-acc", mode="min"),
         ],
         log_every_n_steps=1,
     )
@@ -77,6 +79,10 @@ def main(opt):
     # train the model
     print("Start training")
     trainer.fit(model=snli_model, train_dataloaders=train_loader, val_dataloaders=valid_loader)
+    
+    # save weights of encoder
+    torch.save(snli_model.state_dict(), "model_" + opt["encoder_type"])
+    print("Saved model in {}".format("model_" + opt["encoder_type"]))
 
 
 if __name__ == "__main__":
