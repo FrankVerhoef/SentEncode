@@ -37,7 +37,7 @@ class Encoder(nn.Module):
         if opt["classifier"] == "mlp":
             self.classifier = nn.Sequential(
                 nn.Linear(self.repr_size * 4, 512),
-                nn.ReLU(),
+                nn.Tanh(),
                 nn.Linear(512, 3)
             )
         else:
