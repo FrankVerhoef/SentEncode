@@ -54,7 +54,7 @@ def main(opt):
     )
 
     # get vocabulary from vocabfile or dataset
-    vocab_path = dataset_dir + opt["vocab_file"] if opt["vocab_file"] != None else "snli_vocab.json"
+    vocab_path = dataset_dir + (opt["vocab_file"] if opt["vocab_file"] != None else "snli_vocab.json")
     if not vocab.load(vocab_path):
         corpus = [ex["premise"] for ex in train_dataset]
         corpus += [ex["hypothesis"] for ex in train_dataset]        
@@ -62,7 +62,7 @@ def main(opt):
         vocab.save(dataset_dir + "snli_vocab.json")
 
     # read matched embeddings from preprocessed file or else build from original embeddingsfile
-    embed_path = dataset_dir + opt["snli_embeddings"] if opt["snli_embeddings"] != None else "glove.snli.300d.txt"
+    embed_path = dataset_dir + (opt["snli_embeddings"] if opt["snli_embeddings"] != None else "glove.snli.300d.txt")
     try:
         embedding = vocab.match_with_embeddings(path=embed_path, embedding_size=opt["embedding_size"])
     except:       
