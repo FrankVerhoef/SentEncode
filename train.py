@@ -56,6 +56,7 @@ def main(opt):
     # get vocabulary from vocabfile or dataset
     vocab_path = dataset_dir + (opt["vocab_file"] if opt["vocab_file"] != None else "snli_vocab.json")
     if not vocab.load(vocab_path):
+        print("Build vocab from training dataset")
         corpus = [ex["premise"] for ex in train_dataset]
         corpus += [ex["hypothesis"] for ex in train_dataset]        
         vocab.add_to_vocab(corpus)
@@ -65,7 +66,8 @@ def main(opt):
     embed_path = dataset_dir + (opt["snli_embeddings"] if opt["snli_embeddings"] != None else "glove.snli.300d.txt")
     try:
         embedding = vocab.match_with_embeddings(path=embed_path, embedding_size=opt["embedding_size"])
-    except:       
+    except:
+        print("Start matching embeddings with unprocessed embeddingsfile")  
         embedding = vocab.match_with_embeddings(
             path=opt["data_dir"] + opt["embeddings_file"], 
             embedding_size=opt["embedding_size"], 
