@@ -56,8 +56,8 @@ def main(opt):
     # get vocabulary from vocabfile or dataset
     vocab_path = dataset_dir + opt["vocab_file"] if opt["vocab_file"] != None else "snli_vocab.json"
     if not vocab.load(vocab_path):
-        corpus = [ex["premise"] for ex in dataset]
-        corpus += [ex["hypothesis"] for ex in dataset]        
+        corpus = [ex["premise"] for ex in train_dataset]
+        corpus += [ex["hypothesis"] for ex in train_dataset]        
         vocab.add_to_vocab(corpus)
         vocab.save(dataset_dir + "snli_vocab.json")
 
