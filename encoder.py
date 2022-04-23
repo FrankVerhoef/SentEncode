@@ -5,6 +5,7 @@
 
 import torch
 import torch.nn as nn
+from timeit import default_timer as timer
 
 from models import MeanEmbedding, UniLSTM, BiLSTM, PoolBiLSTM
 
@@ -45,19 +46,25 @@ class Encoder(nn.Module):
 
     def forward(self, premises, hypotheses):
 
+        start = timer()
         # input premises and hypotheses are batches with various sentence lengths
         p, p_len = premises
         h, h_len = hypotheses
+        print("p, p_len, h, h_len are on {} {} {} {}".format(p.device, p_len.device, h.device, h_len.device))
 
         # encode the two sentences
         u = self.sentence_encoder(self.embedding(p), p_len)
         v = self.sentence_encoder(self.embedding(h), h_len)
+
 
         # combine in one big vector
         combined = torch.concat([u, v, abs(u - v), u * v], dim=1)
 
         # calculate the score
         out = self.classifier(combined)
+
+        end = timer()
+        print("Encoding a batch takes {:7.2} milliseconds".format(1000*(end-start)))
 
         return out
 

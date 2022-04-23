@@ -1,5 +1,6 @@
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+from pytorch_lightning.callbacks import ModelCheckpoint
 
 import torch
 from torch.utils.data import DataLoader
@@ -23,13 +24,13 @@ def main(opt):
         path=dataset_dir + opt["dataset_file"] + "_train.jsonl",
         tokenizer=vocab.tokenize,
         encoder=vocab.encode,
-        max_seq_len=opt["num_layers"]
+        max_seq_len=opt["num_layers"], max = 3200
     )
     valid_dataset = SNLIdataset(
         path=dataset_dir + opt["dataset_file"] + "_dev.jsonl",
         tokenizer=vocab.tokenize,
         encoder=vocab.encode,
-        max_seq_len=opt["num_layers"]
+        max_seq_len=opt["num_layers"], max = 800
     )
     train_loader = DataLoader(
         train_dataset, 
@@ -70,6 +71,7 @@ def main(opt):
         gpus=1 if opt["device"]=="gpu" and torch.cuda.is_available() else 0,
         callbacks=[
             EarlyStopping(monitor="lr", stopping_threshold=opt["lr_limit"]),
+            ModelCheckpoint(save_weights_only=True, monitor="val_acc", mode="min"),
         ],
         log_every_n_steps=1,
     )
