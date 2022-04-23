@@ -72,7 +72,7 @@ def main(opt):
         gpus=1 if opt["device"]=="gpu" and torch.cuda.is_available() else 0,
         callbacks=[
             EarlyStopping(monitor="lr", stopping_threshold=opt["lr_limit"]),
-            ModelCheckpoint(save_weights_only=True, monitor="val_acc", mode="min"),
+            ModelCheckpoint(save_weights_only=True, monitor="val_acc", mode="max"),
         ],
         log_every_n_steps=1,
     )
