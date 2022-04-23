@@ -24,13 +24,14 @@ def main(opt):
         path=dataset_dir + opt["dataset_file"] + "_train.jsonl",
         tokenizer=vocab.tokenize,
         encoder=vocab.encode,
-        max_seq_len=opt["num_layers"]
+        max_seq_len=opt["num_layers"], max=3200
     )
+    # train_dataset.save_encoded(dataset_dir + opt["dataset_file"] + "_train_enc.json")
     valid_dataset = SNLIdataset(
         path=dataset_dir + opt["dataset_file"] + "_dev.jsonl",
         tokenizer=vocab.tokenize,
         encoder=vocab.encode,
-        max_seq_len=opt["num_layers"]
+        max_seq_len=opt["num_layers"], max =800
     )
     train_loader = DataLoader(
         train_dataset, 

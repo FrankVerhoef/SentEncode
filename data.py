@@ -38,16 +38,26 @@ class SNLIdataset(Dataset):
                         "premise": ex["sentence1"],
                         "hypothesis": ex["sentence2"],
                         "gold_label": ex["gold_label"], 
-                        "p_ids": self.encoder(self.tokenizer(ex["sentence1"]))[:self.max_seq_len],
-                        "h_ids": self.encoder(self.tokenizer(ex["sentence2"]))[:self.max_seq_len],
-                        "label": LABEL_VALUE[ex["gold_label"]]
+                        # "p_ids": self.encoder(self.tokenizer(ex["sentence1"]))[:self.max_seq_len],
+                        # "h_ids": self.encoder(self.tokenizer(ex["sentence2"]))[:self.max_seq_len],
+                        # "label": LABEL_VALUE[ex["gold_label"]]
                     })
                 i += 1
                 if max != None: 
                     if i>=max: break
         print("Loaded dataset from {} with {} examples".format(path, len(dataset)))
-        return dataset if max==None else dataset[:max]
-        
+        return dataset
+    
+
+    # def save_encoded(self, path):
+    #     with open(path, "w") as f:
+    #         for ex in self.dataset:
+    #             f.write(json.dumps({
+    #                 "p_ids": ex["p_ids"], 
+    #                 "h_ids": ex["h_ids"], 
+    #                 "label": ex["label"]
+    #             }))
+
 
     def __getitem__(self, key):
         return self.dataset[key]
@@ -57,22 +67,32 @@ class SNLIdataset(Dataset):
         return len(self.dataset)
 
 
+    def encode(self, ex):
+        p = self.encoder(self.tokenizer(ex["premise"]))[:self.max_seq_len]
+        h = self.encoder(self.tokenizer(ex["hypothesis"]))[:self.max_seq_len]
+        l = LABEL_VALUE[ex["gold_label"]]
+        return (p, h), l
+
+
     def batchify(self, examples):
         """
             Transforms a list of dataset elements to batch of consisting of (premises, hypotheses), labels
             Premises and hypotheses are both tuples (padded_batch, seqence_lengths)
         """
-        # start = timer()
+        start = timer()
+        p_ids, p_lens, h_ids, h_lens, labels = [], [], [], [], []
+        for (p, h), l in [self.encode(ex) for ex in examples]:
+            p_ids.append(torch.tensor(p, dtype=torch.int))
+            h_ids.append(torch.tensor(h, dtype=torch.int))
+            p_lens.append(len(p_ids))
+            h_lens.append(len(h_ids))
+            labels.append(l)
 
-        p_ids = [torch.tensor(ex["p_ids"], dtype=torch.int) for ex in examples]
-        h_ids = [torch.tensor(ex["h_ids"], dtype=torch.int) for ex in examples]
         p_padded = pad_sequence(p_ids, batch_first=True, padding_value=self.encoder(PAD_TOKEN))
         h_padded = pad_sequence(h_ids, batch_first=True, padding_value=self.encoder(PAD_TOKEN))
-        p_lens = [len(ex["p_ids"]) for ex in examples]
-        h_lens = [len(ex["h_ids"]) for ex in examples]
-        labels = torch.tensor([ex["label"] for ex in examples])
+        labels = torch.tensor(labels)
 
-        # end = timer()
-        # print("Batchify took {:8.2f} milliseconds".format(1000*(end-start)))
+        end = timer()
+        print("Batchify took {:8.2f} milliseconds".format(1000*(end-start)))
 
         return ((p_padded, p_lens), (h_padded, h_lens)), labels
