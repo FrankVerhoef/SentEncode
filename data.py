@@ -84,8 +84,8 @@ class SNLIdataset(Dataset):
         for (p, h), l in [self.encode(ex) for ex in examples]:
             p_ids.append(torch.tensor(p, dtype=torch.int))
             h_ids.append(torch.tensor(h, dtype=torch.int))
-            p_lens.append(len(p_ids))
-            h_lens.append(len(h_ids))
+            p_lens.append(len(p))
+            h_lens.append(len(h))
             labels.append(l)
 
         p_padded = pad_sequence(p_ids, batch_first=True, padding_value=self.encoder(PAD_TOKEN))
