@@ -50,7 +50,7 @@ class Encoder(nn.Module):
         # input premises and hypotheses are batches with various sentence lengths
         p, p_len = premises
         h, h_len = hypotheses
-        print("p, p_len, h, h_len are on {} {} {} {}".format(p.device, p_len.device, h.device, h_len.device))
+        print("p, h are on {} {}".format(p.device, h.device))
 
         # encode the two sentences
         u = self.sentence_encoder(self.embedding(p), p_len)
