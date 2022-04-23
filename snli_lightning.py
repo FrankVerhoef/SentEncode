@@ -1,7 +1,6 @@
 from encoder import Encoder
 
 import pytorch_lightning as pl
-from timeit import default_timer as timer
 
 import torch
 import torch.nn as nn
@@ -46,21 +45,16 @@ class SNLIModule(pl.LightningModule):
     def training_step(self, batch, batch_idx):
 
         # "batch" is the output of the training data loader.
-        start = timer()
         (premises, hypotheses), labels = batch
         preds = self.enc(premises, hypotheses)
-        pred_time = timer()
         loss = self.loss_module(preds, labels)
-        loss_time = timer()
         acc = (preds.argmax(dim=-1) == labels).float().mean()
-
 
         # Logs the accuracy to tensorboard
         self.log('train_acc', acc, on_step=True)
         self.log('train_loss', loss, on_step=True)
         self.log('lr', self.trainer.optimizers[0].param_groups[0]['lr'], on_step=True)
-        log_time = timer()
-        # print("Training step takes: {:7.2} milliseconds".format(1000*(log_time-start)))
+
         return loss
 
 

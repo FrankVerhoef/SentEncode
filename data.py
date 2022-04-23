@@ -7,7 +7,6 @@ from torch.nn.utils.rnn import pad_sequence
 import json
 import torch
 
-from timeit import default_timer as timer
 from tqdm import tqdm
 
 LABEL_VALUE = {
@@ -66,7 +65,6 @@ class SNLIdataset(Dataset):
             Transforms a list of dataset elements to batch of consisting of (premises, hypotheses), labels
             Premises and hypotheses are both tuples (padded_batch, seqence_lengths)
         """
-        start = timer()
         p_ids, p_lens, h_ids, h_lens, labels = [], [], [], [], []
         for (p, h), l in [self.encode(ex) for ex in examples]:
             p_ids.append(torch.tensor(p, dtype=torch.int))
@@ -78,8 +76,5 @@ class SNLIdataset(Dataset):
         p_padded = pad_sequence(p_ids, batch_first=True, padding_value=self.encoder(PAD_TOKEN))
         h_padded = pad_sequence(h_ids, batch_first=True, padding_value=self.encoder(PAD_TOKEN))
         labels = torch.tensor(labels)
-
-        end = timer()
-        # print("Batchify took {:8.2f} milliseconds".format(1000*(end-start)))
 
         return ((p_padded, p_lens), (h_padded, h_lens)), labels
