@@ -29,7 +29,7 @@ class SNLIdataset(Dataset):
         dataset = []
         i = 0
         with open(path, 'r') as f:
-            for line in tqdm(f, desc="Load and encode dataset"):
+            for line in tqdm(f, desc="Load and tokenize dataset"):
                 ex = json.loads(line)
 
                 # only include examples with valid label
@@ -80,6 +80,6 @@ class SNLIdataset(Dataset):
         labels = torch.tensor(labels)
 
         end = timer()
-        print("Batchify took {:8.2f} milliseconds".format(1000*(end-start)))
+        # print("Batchify took {:8.2f} milliseconds".format(1000*(end-start)))
 
         return ((p_padded, p_lens), (h_padded, h_lens)), labels

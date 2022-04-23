@@ -105,7 +105,7 @@ class Vocab:
             ))
             print("Most frequent out-of-vocabulary tokens:")
             for t,c in sorted(oov.items(), key=lambda x: x[1], reverse=True)[:10]:
-                print("\t{:20} \t{}".format(t[:20], c))
+                print("{:20} \t{}".format(t[:20], c))
 
         # Initialize new indices
         t2id_new, id2t_new, id2emb = {}, [], []

@@ -60,7 +60,7 @@ class SNLIModule(pl.LightningModule):
         self.log('train_loss', loss, on_step=True)
         self.log('lr', self.trainer.optimizers[0].param_groups[0]['lr'], on_step=True)
         log_time = timer()
-        print("Training step takes: {:7.2} milliseconds".format(1000*(log_time-start)))
+        # print("Training step takes: {:7.2} milliseconds".format(1000*(log_time-start)))
         return loss
 
 
