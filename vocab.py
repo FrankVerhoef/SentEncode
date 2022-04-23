@@ -39,7 +39,7 @@ class Vocab:
 
     def tokenize(self, sentence):
 
-        tokens = [token.text.lower() for token in nlp(sentence)]
+        tokens = [token.text.lower() for token in nlp.tokenizer(sentence)]
         return tokens
 
 

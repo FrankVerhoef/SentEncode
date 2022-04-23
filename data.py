@@ -35,28 +35,15 @@ class SNLIdataset(Dataset):
                 # only include examples with valid label
                 if ex["gold_label"] in LABEL_VALUE.keys():
                     dataset.append({
-                        "premise": ex["sentence1"],
-                        "hypothesis": ex["sentence2"],
+                        "premise": self.tokenizer(ex["sentence1"])[:self.max_seq_len],
+                        "hypothesis": self.tokenizer(ex["sentence2"])[:self.max_seq_len],
                         "gold_label": ex["gold_label"], 
-                        # "p_ids": self.encoder(self.tokenizer(ex["sentence1"]))[:self.max_seq_len],
-                        # "h_ids": self.encoder(self.tokenizer(ex["sentence2"]))[:self.max_seq_len],
-                        # "label": LABEL_VALUE[ex["gold_label"]]
                     })
                 i += 1
                 if max != None: 
                     if i>=max: break
         print("Loaded dataset from {} with {} examples".format(path, len(dataset)))
         return dataset
-    
-
-    # def save_encoded(self, path):
-    #     with open(path, "w") as f:
-    #         for ex in self.dataset:
-    #             f.write(json.dumps({
-    #                 "p_ids": ex["p_ids"], 
-    #                 "h_ids": ex["h_ids"], 
-    #                 "label": ex["label"]
-    #             }))
 
 
     def __getitem__(self, key):
@@ -68,8 +55,8 @@ class SNLIdataset(Dataset):
 
 
     def encode(self, ex):
-        p = self.encoder(self.tokenizer(ex["premise"]))[:self.max_seq_len]
-        h = self.encoder(self.tokenizer(ex["hypothesis"]))[:self.max_seq_len]
+        p = self.encoder(ex["premise"])
+        h = self.encoder(ex["hypothesis"])
         l = LABEL_VALUE[ex["gold_label"]]
         return (p, h), l
 
