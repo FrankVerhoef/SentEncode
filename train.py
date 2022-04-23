@@ -1,6 +1,5 @@
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
-from pytorch_lightning.callbacks import ModelCheckpoint
 
 import torch
 from torch.utils.data import DataLoader
@@ -71,7 +70,6 @@ def main(opt):
         gpus=1 if opt["device"]=="gpu" and torch.cuda.is_available() else 0,
         callbacks=[
             EarlyStopping(monitor="lr", stopping_threshold=opt["lr_limit"]),
-            ModelCheckpoint(save_weights_only=True, monitor="val-acc", mode="min"),
         ],
         log_every_n_steps=1,
     )
