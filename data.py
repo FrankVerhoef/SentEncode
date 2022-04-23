@@ -62,7 +62,7 @@ class SNLIdataset(Dataset):
             Transforms a list of dataset elements to batch of consisting of (premises, hypotheses), labels
             Premises and hypotheses are both tuples (padded_batch, seqence_lengths)
         """
-        start = timer()
+        # start = timer()
 
         p_ids = [torch.tensor(ex["p_ids"], dtype=torch.int) for ex in examples]
         h_ids = [torch.tensor(ex["h_ids"], dtype=torch.int) for ex in examples]
@@ -72,7 +72,7 @@ class SNLIdataset(Dataset):
         h_lens = [len(ex["h_ids"]) for ex in examples]
         labels = torch.tensor([ex["label"] for ex in examples])
 
-        end = timer()
-        print("Batchify took {:8.2f} milliseconds".format(1000*(end-start)))
+        # end = timer()
+        # print("Batchify took {:8.2f} milliseconds".format(1000*(end-start)))
 
         return ((p_padded, p_lens), (h_padded, h_lens)), labels
