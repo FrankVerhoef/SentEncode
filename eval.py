@@ -35,10 +35,17 @@ def prepare(params, samples):
     params.encoder = vocab.encode
 
     # match embeddings with vocab
-    params.embedding = vocab.match_with_embeddings(
-        path = opt["data_dir"] + opt["embeddings_file"], 
-        embedding_size = opt["embedding_size"]
-    )
+    try:
+        params.embedding = vocab.match_with_embeddings(
+            path=opt['data_dir'] + 'glove_' + params.current_task + '.txt', 
+            embedding_size=opt["embedding_size"]
+        )
+    except:
+        params.embedding = vocab.match_with_embeddings(
+            path = opt["data_dir"] + opt["embeddings_file"], 
+            embedding_size = opt["embedding_size"],
+            savepath=opt['data_dir'] + 'glove_' + params.current_task + '.txt'
+        )
     params.wvec_dim = opt["embedding_size"]
     return
 
@@ -99,7 +106,6 @@ if __name__ == "__main__":
     print('\n'.join(["{:20}\t{}".format(k,v) for k,v in opt.items()]))
 
     se = senteval.engine.SE(params_senteval, batcher, prepare)
-    transfer_tasks = ['MR']
-    # transfer_tasks = ['MR', 'CR', 'SUBJ', 'MPQA', 'SST2', 'TREC', 'MRPC', 'SICKEntailment']
+    transfer_tasks = ['MR', 'CR', 'SUBJ', 'MPQA', 'SST2', 'TREC', 'MRPC', 'SICKEntailment']
     results = se.eval(transfer_tasks)
     print(results)
