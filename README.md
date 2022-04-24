@@ -8,8 +8,10 @@ The goal is to train a sentence encoder and classifier on a natural language inf
 
 ### train.py
 
-Contains the main code to train the model, using pytorch lightning Trainer.
-Usage: python train.py --encoder_type ...
+Contains the main code to train the model, using pytorch lightning Trainer. Usage:
+
+    python train.py --encoder_type ...
+
 Other command line options give flexibility to specify training parameters, model parameters and location of source files.
 
 files
@@ -50,18 +52,22 @@ The sentence encoder state dict is also used by eval.py, to test performance of 
 
 ### test.py
 
-Loads state dicts of sentence encoder and classifier and tests performance of the combination on the SNLI test dataset.
-Command line options similar to train.py (see above).
+Loads state dicts of sentence encoder and classifier and tests performance of the combination on the SNLI test dataset. Usage:
 
+    python test.py --encoder_type ...
+    
+Command line options similar to train.py (see above).
 In addition, there is the following option:
 
     --models_dir, default="models/"
 
 ### eval.py
 
-Loads state dict of sentence encoder and tests performance of the sentence encoder against the SentEval tasks
-Command line options are similar to train.py (see above).
+Loads state dict of sentence encoder and tests performance of the sentence encoder against the SentEval tasks. Usage:
 
+    python eval.py --encoder_type ... --tasks ... 
+        
+Command line options are similar to train.py (see above).
 In addition, there are the following options:
 
     --tasks, nargs="*", type=str, default=['MR', 'CR', 'SUBJ', 'MPQA', 'SST2', 'TREC', 'MRPC', 'SICKEntailment']
