@@ -7,7 +7,8 @@ from torch.utils.data import DataLoader
 from argparse import ArgumentParser
 
 from snli_lightning import SNLIModule
-from encoder import ENCODER_TYPES, CLASSIFIER_TYPES
+from models import ENCODER_TYPES
+from encoder import CLASSIFIER_TYPES
 from data import SNLIdataset
 from vocab import Vocab
 
@@ -81,9 +82,10 @@ def main(opt):
     print("Start training")
     trainer.fit(model=snli_model, train_dataloaders=train_loader, val_dataloaders=valid_loader)
     
-    # save weights of encoder
-    torch.save(snli_model.state_dict(), "model_" + opt["encoder_type"])
-    print("Saved model in {}".format("model_" + opt["encoder_type"]))
+    # save weights of encoder and classifier
+    torch.save(snli_model.enc.sentence_encoder.state_dict(), "encoder_" + opt["encoder_type"])
+    torch.save(snli_model.enc.classifier.state_dict(), "classifier" + opt["encoder_type"])
+    print("Saved sentence encoder in {}".format("encoder_" + opt["encoder_type"]))
 
 
 if __name__ == "__main__":

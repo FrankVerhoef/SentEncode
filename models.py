@@ -13,6 +13,7 @@
 import torch
 import torch.nn as nn
 
+
 class MeanEmbedding(nn.Module):
 
     def __init__(self, opt):
@@ -112,3 +113,11 @@ class PoolBiLSTM(nn.Module):
             repr = None # should never occur because of check at initialization
 
         return repr
+
+ENCODERS = {
+    'mean': MeanEmbedding,
+    'lstm': UniLSTM,
+    'bilstm': BiLSTM,
+    'poolbilstm': PoolBiLSTM
+}
+ENCODER_TYPES = list(ENCODERS.keys())

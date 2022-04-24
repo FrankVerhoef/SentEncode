@@ -7,15 +7,8 @@ import torch
 import torch.nn as nn
 from timeit import default_timer as timer
 
-from models import MeanEmbedding, UniLSTM, BiLSTM, PoolBiLSTM
+from models import ENCODERS, ENCODER_TYPES
 
-ENCODERS = {
-    'mean': MeanEmbedding,
-    'lstm': UniLSTM,
-    'bilstm': BiLSTM,
-    'poolbilstm': PoolBiLSTM
-}
-ENCODER_TYPES = list(ENCODERS.keys())
 CLASSIFIER_TYPES = ["mlp", "linear"]
 
 class Encoder(nn.Module):
@@ -46,11 +39,9 @@ class Encoder(nn.Module):
 
     def forward(self, premises, hypotheses):
 
-        # start = timer()
         # input premises and hypotheses are batches with various sentence lengths
         p, p_len = premises
         h, h_len = hypotheses
-        # print("p, h are on {} {}".format(p.device, h.device))
 
         # encode the two sentences
         u = self.sentence_encoder(self.embedding(p), p_len)
@@ -61,9 +52,6 @@ class Encoder(nn.Module):
 
         # calculate the score
         out = self.classifier(combined)
-
-        # end = timer()
-        # print("Encoding a batch takes {:7.2} milliseconds".format(1000*(end-start)))
 
         return out
 

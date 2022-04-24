@@ -2,6 +2,7 @@ import spacy
 import json
 import torch
 import torch.nn as nn
+import numpy as np
 from tqdm import tqdm
 
 #nlp = spacy.load(r'/Users/FrankVerhoef/opt/anaconda3/envs/pai_parlai/lib/python3.9/site-packages/en_core_web_sm/en_core_web_sm-3.2.0')
@@ -21,13 +22,13 @@ class Vocab:
         self.id2t = [PAD_TOKEN, UNK_TOKEN]
 
 
-    def add_to_vocab(self, sentences):
+    def add_to_vocab(self, sentences, tokenize=True):
 
         count_start = len(self.id2t)
 
         # add new tokens to the indices
         for s in tqdm(sentences):
-            for t in self.tokenize(s):
+            for t in (self.tokenize(s) if tokenize else s):
                 if t not in self.t2id.keys():
                     self.t2id[t] = len(self.id2t)
                     self.id2t.append(t)
@@ -79,14 +80,13 @@ class Vocab:
     def match_with_embeddings(self, path, embedding_size, savepath=None):
 
         def get_token_and_vector(line, embedding_size):
-            fields = line.split()
-            token = fields[0]
+            token, vectorstring = line.split(' ', 1)
             try:
-                vector = torch.tensor([float(value) for value in fields[1:]])
+                vector = torch.tensor(np.fromstring(vectorstring, sep=' ', dtype=float))
                 assert len(vector) == embedding_size
                 return token, vector
             except:
-                print("Error creating embedding of size {} for <{}>\n{}".format(embedding_size, token, fields[1:]))
+                print("Error creating embedding of size {} for <{}>\n{}".format(embedding_size, token, vectorstring))
                 return None, None
 
         def print_coverage_stats(oov):
@@ -125,6 +125,7 @@ class Vocab:
                         t2id_new[token] = len(id2t_new)
                         id2t_new.append(token)        
                         id2emb.append(vector)
+                if num_embeddings > 100000: break   # TODO: remove
 
         # If no PAD token found in file, set embedding for PAD_TOKEN to zero vector
         if not PAD_TOKEN in id2t_new:
