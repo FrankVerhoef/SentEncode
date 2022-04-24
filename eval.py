@@ -65,7 +65,7 @@ def batcher(params, batch):
     word_embeddings = params.embedding(words_padded).type(torch.float)
     sent_repr = sent_encoder(word_embeddings, sent_lens)
 
-    return sent_repr.numpy()
+    return sent_repr
 
 
 # Set params for SentEval
