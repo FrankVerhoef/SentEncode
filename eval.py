@@ -88,6 +88,13 @@ logging.basicConfig(format='%(asctime)s : %(message)s', level=logging.DEBUG)
 if __name__ == "__main__":
 
     parser = ArgumentParser()
+    # tasks
+    parser.add_argument(
+        "--tasks", 
+        nargs="*", 
+        type=str, 
+        default=['MR', 'CR', 'SUBJ', 'MPQA', 'SST2', 'TREC', 'MRPC', 'SICKEntailment']
+    )
 
     # files
     parser.add_argument("--data_dir", default="data/")
@@ -106,6 +113,5 @@ if __name__ == "__main__":
     print('\n'.join(["{:20}\t{}".format(k,v) for k,v in opt.items()]))
 
     se = senteval.engine.SE(params_senteval, batcher, prepare)
-    transfer_tasks = ['MR', 'CR', 'SUBJ', 'MPQA', 'SST2', 'TREC', 'MRPC', 'SICKEntailment']
-    results = se.eval(transfer_tasks)
+    results = se.eval(opt["tasks"])
     print(results)
