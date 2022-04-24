@@ -152,7 +152,7 @@ class Vocab:
                 for t, e in zip(self.id2t, id2emb):
                     f.write(t + ' ' + ' '.join(["{:1.4}".format(v) for v in e]))
                     f.write('\n')
-            print("Saved {} matched snli token embeddings in ".format(len(id2emb), savepath))
+            print("Saved {} task specific token embeddings in ".format(len(id2emb), savepath))
 
         embedding = nn.Embedding.from_pretrained(
             torch.stack(id2emb, dim=0), 
