@@ -1,3 +1,7 @@
+"""
+    Code for building the vocabulary from source sentences, and for matching of vocabulary with word embeddings
+"""
+
 import spacy
 import json
 import torch
@@ -16,13 +20,19 @@ class Vocab:
 
     def __init__(self):
 
-        # initialize vocab with padding and unk tokens
+        # initialize empty vocab with padding and unk token
         self.t2id = {PAD_TOKEN: 0, UNK_TOKEN: 1}
         self.count = {PAD_TOKEN: 0, UNK_TOKEN: 0}
         self.id2t = [PAD_TOKEN, UNK_TOKEN]
 
 
     def add_to_vocab(self, sentences, tokenize=True):
+        """
+            Adds words from the sentences to the vocab (if they are not already in the vocab)
+            Input format is:
+            - a list of strings. In that case it should be tokenized (which is default behaviour)
+            - a list of list of words(tokens). In that case 'tokenize' should be set to 'False'.
+        """
 
         count_start = len(self.id2t)
 
@@ -39,12 +49,20 @@ class Vocab:
 
 
     def tokenize(self, sentence):
+        """
+            Performs basic tokenization, using Spacy tokenizer.
+        """
 
         tokens = [token.text.lower() for token in nlp.tokenizer(sentence)]
         return tokens
 
 
     def encode(self, tokens):
+        """
+            Input is either a token or a list of tokens.
+            Returns corresponding token id, or list of corresponding token ids.
+            For unknown tokens, the id of the UNK_TOKEN is returned
+        """
         if isinstance(tokens, list):
             return [self._encode(t) for t in tokens]
         else:
@@ -78,8 +96,19 @@ class Vocab:
 
 
     def match_with_embeddings(self, path, embedding_size, savepath=None):
+        """
+            Reads embeddings from input file and matches these with the words (tokens) in the vocab.
+            Returns an Embedding that contains all the matched word embeddings.
+            All tokens that do not have a matching embedding are removed from the vocab.
+            An embedding for an UNK token is calculated as the average of ALL embeddings in the embeddingsfile.
+            If a 'savepath' is provided, the matched embeddings will be saved. This preprocessed file can
+            be used to significantly speed up the matching process.
+        """
 
         def get_token_and_vector(line, embedding_size):
+            """
+                Transform input line from embedding file to token and torch vector.
+            """
             token, vectorstring = line.split(' ', 1)
             try:
                 vector = torch.tensor(np.fromstring(vectorstring, sep=' ', dtype=float))
@@ -90,6 +119,9 @@ class Vocab:
                 return None, None
 
         def print_coverage_stats(oov):
+            """
+                Print statistics about the matching of vocabulary and word embeddings
+            """
             num_common = len(self.id2t)
             freq_common = sum(self.count.values())
             num_oov = len(oov.keys())
@@ -116,6 +148,7 @@ class Vocab:
 
         # Read embeddings from file and match with vocab
         with open(path, "r", encoding="utf-8") as f:
+            print("Matching vocab with embeddings from {}".format(path))
             for line in tqdm(f):
                 token, vector = get_token_and_vector(line, embedding_size)
                 if token != None:
