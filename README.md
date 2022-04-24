@@ -100,3 +100,14 @@ Code for building the vocabulary from source sentences, and for matching of voca
 Code to load the SNLI dataset.
 Also contains the function 'batchify' that is used by the dataloader to transform a list of examples from the dataset to the batch format that is used by to train/evaluate the model
 
+## Interactive testing
+
+A Colab notebook can be used to perform the SentEval tests interactively. The user is asked to specify which model, and which task(s), and then the SentEval check is run with the given model and task(s).
+
+    https://colab.research.google.com/drive/1xvCqrutfoLzPWNP7BHkR_gEDcANN0I4c?usp=sharing
+
+## Pretrained models
+
+The pretrained sentence encoders and classifiers for each model can be downloaded from:
+
+    https://drive.google.com/drive/folders/1vMA9nbBabWRfaf2UY3ef5hnOO8cPo68f?usp=sharing
