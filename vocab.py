@@ -148,11 +148,14 @@ class Vocab:
         print_coverage_stats(oov=oov)
 
         if savepath != None:
-            with open(savepath, "w") as f:
+            with open(savepath, "w", encoding="utf-8") as f:
                 for t, e in zip(self.id2t, id2emb):
-                    f.write(t + ' ' + ' '.join(["{:1.4}".format(v) for v in e]))
-                    f.write('\n')
-            print("Saved {} task specific token embeddings in ".format(len(id2emb), savepath))
+                    try:
+                        f.write(t + ' ' + ' '.join(["{:1.4}".format(v) for v in e]))
+                        f.write('\n')
+                    except:
+                        print("Skipped embedding for <{}> when saving embeddings".format(t))
+            print("Saved {} task specific token embeddings in {}".format(len(id2emb), savepath))
 
         embedding = nn.Embedding.from_pretrained(
             torch.stack(id2emb, dim=0), 
