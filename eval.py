@@ -62,7 +62,7 @@ def batcher(params, batch):
     word_ids = [torch.tensor(params.encoder(sent), dtype=torch.int) for sent in batch]
     sent_lens = [len(sent) for sent in batch]
     words_padded = pad_sequence(word_ids, batch_first=True, padding_value=params.encoder(PAD_TOKEN))
-    word_embeddings = params.embedding(words_padded)
+    word_embeddings = params.embedding(words_padded).type(torch.float)
     sent_repr = sent_encoder(word_embeddings, sent_lens)
 
     return sent_repr.numpy()
