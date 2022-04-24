@@ -84,7 +84,7 @@ def main(opt):
     
     # save weights of encoder and classifier
     torch.save(snli_model.enc.sentence_encoder.state_dict(), "encoder_" + opt["encoder_type"])
-    torch.save(snli_model.enc.classifier.state_dict(), "classifier" + opt["encoder_type"])
+    torch.save(snli_model.enc.classifier.state_dict(), "classifier_" + opt["encoder_type"])
     print("Saved sentence encoder in {}".format("encoder_" + opt["encoder_type"]))
 
 
