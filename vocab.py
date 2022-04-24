@@ -125,7 +125,6 @@ class Vocab:
                         t2id_new[token] = len(id2t_new)
                         id2t_new.append(token)        
                         id2emb.append(vector)
-                if num_embeddings > 100000: break   # TODO: remove
 
         # If no PAD token found in file, set embedding for PAD_TOKEN to zero vector
         if not PAD_TOKEN in id2t_new:
