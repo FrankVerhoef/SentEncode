@@ -12,7 +12,7 @@ opt = {
     "vocab_file": "snli_vocab.json",
     "data_dir": "data/",
     "dataset_dir": "snli_1_0/",
-    "dataset_file": "snli_small",
+    "dataset_file": "snli_1.0",
     "embeddings_file": "glove.840B.300d.txt",
     "snli_embeddings": "glove.snli.300d.txt",
     "embedding_size": 10,
@@ -20,6 +20,7 @@ opt = {
     "num_layers": 32,
     "aggregate_method": "max",
     "encoder_type": ENCODER_TYPES[0],
+    "classifier": "mlp",
     "batch_size": 4,
     "lr": 0.1,
     "lr_limit": 1E-5,
@@ -40,8 +41,14 @@ def test_models():
 
 def test_dataset():
     print("===== TEST DATASET =====")
+    vocab = Vocab()
     dataset_dir = opt["data_dir"] + opt["dataset_dir"]
-    dataset = SNLIdataset(dataset_dir + opt["dataset_file"] + "_train.jsonl", tokenizer=None, encoder=None, max_seq_len=opt["num_layers"])
+    dataset = SNLIdataset(
+        dataset_dir + opt["dataset_file"] + "_train.jsonl", 
+        tokenizer=vocab.tokenize,  # tokenizer is needed because sentences in SNLIdataset will be tokenized
+        encoder=vocab.encode, 
+        max_seq_len=opt["num_layers"]
+    )
     for i in range(3):
         print(i,dataset[i])
 
@@ -49,6 +56,9 @@ def test_dataset():
 def test_vocab():
 
     print("===== TEST VOCAB =====")
+
+    opt["embedding_size"] = 300   # must be 300 for glove embeddings
+
     dataset_dir = opt["data_dir"] + opt["dataset_dir"]
     vocab = Vocab()
     dataset = SNLIdataset(
@@ -152,6 +162,9 @@ def test_dataloader():
 def test_inference():
 
     print("===== TEST INFERENCE =====")
+
+    opt["embedding_size"] = 300   # must be 300 for glove embeddings
+
     dataset_dir = opt["data_dir"] + opt["dataset_dir"]
     vocab = Vocab()
 
