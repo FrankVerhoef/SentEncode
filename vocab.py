@@ -111,7 +111,7 @@ class Vocab:
             """
             token, vectorstring = line.split(' ', 1)
             try:
-                vector = torch.tensor(np.fromstring(vectorstring, sep=' ', dtype=float))
+                vector = torch.tensor(np.fromstring(vectorstring, sep=' '), dtype=torch.float)
                 assert len(vector) == embedding_size
                 return token, vector
             except:
